@@ -14,9 +14,23 @@
  * limitations under the License.
  */
 
-@Internal
-@NonNullApi
-package io.jmix.search.listener;
+package io.jmix.search.searching;
 
-import io.jmix.core.annotation.Internal;
-import org.springframework.lang.NonNullApi;
+public class FieldHit {
+
+    private final String fieldName;
+    private final String highlights;
+
+    public FieldHit(String fieldName, String highlights) {
+        this.fieldName = fieldName;
+        this.highlights = highlights;
+    }
+
+    public String getFieldName() {
+        return fieldName;
+    }
+
+    public String getHighlights() {
+        return highlights;
+    }
+}

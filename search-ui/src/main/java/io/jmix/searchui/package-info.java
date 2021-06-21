@@ -14,23 +14,7 @@
  * limitations under the License.
  */
 
-package io.jmix.search.searching.impl;
+@NonNullApi
+package io.jmix.searchui;
 
-public class FieldHit {
-
-    private final String fieldName;
-    private final String highlights;
-
-    public FieldHit(String fieldName, String highlights) {
-        this.fieldName = fieldName;
-        this.highlights = highlights;
-    }
-
-    public String getFieldName() {
-        return fieldName;
-    }
-
-    public String getHighlights() {
-        return highlights;
-    }
-}
+import org.springframework.lang.NonNullApi;
