@@ -30,6 +30,7 @@ import io.jmix.search.index.mapping.DisplayedNameDescriptor;
 import io.jmix.search.index.mapping.IndexConfigurationManager;
 import io.jmix.search.index.mapping.IndexMappingConfiguration;
 import io.jmix.search.index.mapping.MappingFieldDescriptor;
+import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
@@ -65,6 +66,8 @@ public class EntityIndexerImpl implements EntityIndexer {
     protected IdSerialization idSerialization;
     @Autowired
     protected IndexStateRegistry indexStateRegistry;
+    @Autowired
+    protected MetadataTools metadataTools;
 
     protected ObjectMapper objectMapper = new ObjectMapper();
 
@@ -131,7 +134,9 @@ public class EntityIndexerImpl implements EntityIndexer {
             }
         }
 
-        BulkResponse bulkResponse = executeBulkRequest(request);
+        BulkResponse bulkResponse = request.requests().isEmpty()
+                ? createNoopBulkResponse()
+                : executeBulkRequest(request);
         return IndexResult.create(bulkResponse);
     }
 
@@ -177,10 +182,26 @@ public class EntityIndexerImpl implements EntityIndexer {
             if (indexConfigurationOpt.isPresent()) {
                 IndexConfiguration indexConfiguration = indexConfigurationOpt.get();
                 FetchPlan fetchPlan = fetchPlanLocalCache.computeIfAbsent(indexConfiguration, this::createFetchPlan);
-                List<Object> loaded = dataManager.load(metaClass.getJavaClass())
-                        .ids(entityIds)
-                        .fetchPlan(fetchPlan)
-                        .list();
+                List<Object> loaded;
+                if (metadataTools.hasCompositePrimaryKey(metaClass)) {
+                    loaded = entityIds.stream()
+                            .map(id -> dataManager
+                                    .load(metaClass.getJavaClass())
+                                    .id(id)
+                                    .fetchPlan(fetchPlan)
+                                    .optional())
+                            .filter(Optional::isPresent)
+                            .map(Optional::get)
+                            .collect(Collectors.toList());
+                } else {
+                    String primaryKeyName = metadataTools.getPrimaryKeyName(metaClass);
+                    loaded = dataManager
+                            .load(metaClass.getJavaClass())
+                            .query("select e from " + metaClass.getName() + " e where e." + primaryKeyName + " in :ids")
+                            .parameter("ids", entityIds)
+                            .fetchPlan(fetchPlan)
+                            .list();
+                }
                 result.put(indexConfiguration, loaded);
             }
         });
@@ -280,7 +301,9 @@ public class EntityIndexerImpl implements EntityIndexer {
             }
         }
 
-        BulkResponse bulkResponse = executeBulkRequest(request);
+        BulkResponse bulkResponse = request.requests().isEmpty()
+                ? createNoopBulkResponse()
+                : executeBulkRequest(request);
         return IndexResult.create(bulkResponse);
     }
 
@@ -314,6 +337,10 @@ public class EntityIndexerImpl implements EntityIndexer {
             log.trace("Field value tree: {}", objectNodeForField);
             merge(objectNodeForField, entityIndexContent);
         }
+    }
+
+    protected BulkResponse createNoopBulkResponse() {
+        return new BulkResponse(new BulkItemResponse[]{}, 0L);
     }
 
     //todo move to tools?
