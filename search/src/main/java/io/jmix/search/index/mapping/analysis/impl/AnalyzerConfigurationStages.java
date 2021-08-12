@@ -18,8 +18,11 @@ package io.jmix.search.index.mapping.analysis.impl;
 
 import io.jmix.search.index.mapping.analysis.AnalysisConfigurationStages;
 
+/**
+ * Stages of analyzer configuration fluent API
+ */
 public interface AnalyzerConfigurationStages extends
-        AnalysisConfigurationStages.DefineAnalyzer,
+        AnalysisConfigurationStages.InitAnalyzerDefinition,
         AnalysisConfigurationStages.SetupTokenizer,
         AnalysisConfigurationStages.SetupParameters,
         AnalysisConfigurationStages.SetupFilters {

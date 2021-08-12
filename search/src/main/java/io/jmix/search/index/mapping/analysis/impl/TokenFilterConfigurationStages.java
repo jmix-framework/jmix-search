@@ -18,6 +18,9 @@ package io.jmix.search.index.mapping.analysis.impl;
 
 import io.jmix.search.index.mapping.analysis.AnalysisConfigurationStages;
 
+/**
+ * Stages of token filter configuration fluent API
+ */
 public interface TokenFilterConfigurationStages extends
         AnalysisConfigurationStages.DefineTokenFilter,
         AnalysisConfigurationStages.SetupParameters {

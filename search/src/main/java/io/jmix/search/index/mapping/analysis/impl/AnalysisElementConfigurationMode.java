@@ -16,12 +16,9 @@
 
 package io.jmix.search.index.mapping.analysis.impl;
 
-import io.jmix.search.index.mapping.analysis.AnalysisConfigurationStages;
+public enum AnalysisElementConfigurationMode {
 
-/**
- * Stages of tokenizer configuration fluent API
- */
-public interface TokenizerConfigurationStages extends
-        AnalysisConfigurationStages.DefineTokenizer,
-        AnalysisConfigurationStages.SetupParameters {
+    CUSTOM,
+    MODIFIED,
+    NATIVE
 }

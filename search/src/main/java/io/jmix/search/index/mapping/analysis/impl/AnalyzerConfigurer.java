@@ -16,42 +16,77 @@
 
 package io.jmix.search.index.mapping.analysis.impl;
 
-import io.jmix.search.index.mapping.analysis.AnalysisConfigurationStages;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.commons.lang3.StringUtils;
 
-public class AnalyzerConfigurer implements AnalyzerConfigurationStages {
-    //todo
-    @Override
-    public AnalysisConfigurationStages.SetupParameters configureBuiltInAnalyzer(String analyzerTypeName) {
-        return null;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import static io.jmix.search.index.mapping.analysis.AnalysisConfigurationStages.SetupFilters;
+import static io.jmix.search.index.mapping.analysis.AnalysisConfigurationStages.SetupTokenizer;
+import static io.jmix.search.index.mapping.analysis.impl.AnalysisElementConfigurationMode.CUSTOM;
+import static io.jmix.search.index.mapping.analysis.impl.AnalysisElementType.ANALYZER;
+
+public class AnalyzerConfigurer extends AnalysisElementConfigurer implements AnalyzerConfigurationStages {
+
+    protected String tokenizer;
+    protected List<String> charFilters;
+    protected List<String> tokenFilters;
+
+    protected AnalyzerConfigurer(String name) {
+        super(name);
+        this.charFilters = Collections.emptyList();
+        this.tokenFilters = Collections.emptyList();
     }
 
     @Override
-    public AnalysisConfigurationStages.SetupTokenizer createCustom() {
-        return null;
+    protected AnalysisElementType getType() {
+        return ANALYZER;
     }
 
     @Override
-    public void withNativeConfiguration(String nativeConfiguration) {
-
+    public SetupTokenizer createCustom() {
+        this.mode = CUSTOM;
+        this.typeName = "custom";
+        return this;
     }
 
     @Override
-    public AnalysisConfigurationStages.SetupParameters withParameter(String key, Object value) {
-        return null;
+    public SetupFilters withTokenizer(String tokenizerName) {
+        this.tokenizer = tokenizerName;
+        return this;
     }
 
     @Override
-    public AnalysisConfigurationStages.SetupFilters withTokenizer(String tokenizerName) {
-        return null;
+    public SetupFilters withCharacterFilters(String... charFilterNames) {
+        this.charFilters = Arrays.asList(charFilterNames);
+        return this;
     }
 
     @Override
-    public AnalysisConfigurationStages.SetupFilters withCharacterFilters(String... charFilterNames) {
-        return null;
+    public SetupFilters withTokenFilters(String... tokenFilterNames) {
+        this.tokenFilters = Arrays.asList(tokenFilterNames);
+        return this;
     }
 
     @Override
-    public AnalysisConfigurationStages.SetupFilters withTokenFilters(String... tokenFilterNames) {
-        return null;
+    protected ObjectNode createCustomConfig() {
+        ObjectNode config = JsonNodeFactory.instance.objectNode();
+        config.put("type", typeName);
+        if (StringUtils.isBlank(tokenizer)) {
+            throw new RuntimeException("Tokenizer is not specified");
+        }
+        config.put("tokenizer", tokenizer);
+
+        ArrayNode charFiltersNode = mapper.convertValue(charFilters, ArrayNode.class);
+        config.set("char_filter", charFiltersNode);
+
+        ArrayNode tokenFiltersNode = mapper.convertValue(tokenFilters, ArrayNode.class);
+        config.set("filter", tokenFiltersNode);
+
+        return config;
     }
 }

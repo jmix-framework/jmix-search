@@ -18,6 +18,9 @@ package io.jmix.search.index.mapping.analysis.impl;
 
 import io.jmix.search.index.mapping.analysis.AnalysisConfigurationStages;
 
+/**
+ * Stages of character filter configuration fluent API
+ */
 public interface CharacterFilterConfigurationStages extends
         AnalysisConfigurationStages.DefineCharacterFilter,
         AnalysisConfigurationStages.SetupParameters {

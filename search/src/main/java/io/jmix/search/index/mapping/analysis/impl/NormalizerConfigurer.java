@@ -16,37 +16,64 @@
 
 package io.jmix.search.index.mapping.analysis.impl;
 
-import io.jmix.search.index.mapping.analysis.AnalysisConfigurationStages;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public class NormalizerConfigurer implements NormalizerConfigurationStages {
-    //todo
-    @Override
-    public AnalysisConfigurationStages.SetupParameters configureBuiltInNormalizer(String normalizerTypeName) {
-        return null;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import static io.jmix.search.index.mapping.analysis.AnalysisConfigurationStages.SetupFilters;
+import static io.jmix.search.index.mapping.analysis.impl.AnalysisElementConfigurationMode.CUSTOM;
+import static io.jmix.search.index.mapping.analysis.impl.AnalysisElementType.NORMALIZER;
+
+public class NormalizerConfigurer extends AnalysisElementConfigurer implements NormalizerConfigurationStages {
+
+    protected List<String> charFilters;
+    protected List<String> tokenFilters;
+
+    protected NormalizerConfigurer(String name) {
+        super(name);
+        this.charFilters = Collections.emptyList();
+        this.tokenFilters = Collections.emptyList();
     }
 
     @Override
-    public AnalysisConfigurationStages.SetupFilters createCustom() {
-        return null;
+    protected AnalysisElementType getType() {
+        return NORMALIZER;
     }
 
     @Override
-    public void withNativeConfiguration(String nativeConfiguration) {
-
+    public SetupFilters createCustom() {
+        this.mode = CUSTOM;
+        this.typeName = "custom";
+        return this;
     }
 
     @Override
-    public AnalysisConfigurationStages.SetupParameters withParameter(String key, Object value) {
-        return null;
+    public SetupFilters withCharacterFilters(String... charFilterNames) {
+        this.charFilters = Arrays.asList(charFilterNames);
+        return this;
     }
 
     @Override
-    public AnalysisConfigurationStages.SetupFilters withCharacterFilters(String... charFilterNames) {
-        return null;
+    public SetupFilters withTokenFilters(String... tokenFilterNames) {
+        this.tokenFilters = Arrays.asList(tokenFilterNames);
+        return this;
     }
 
     @Override
-    public AnalysisConfigurationStages.SetupFilters withTokenFilters(String... tokenFilterNames) {
-        return null;
+    protected ObjectNode createCustomConfig() {
+        ObjectNode config = JsonNodeFactory.instance.objectNode();
+        config.put("type", typeName);
+
+        ArrayNode charFiltersNode = mapper.convertValue(charFilters, ArrayNode.class);
+        config.set("char_filter", charFiltersNode);
+
+        ArrayNode tokenFiltersNode = mapper.convertValue(tokenFilters, ArrayNode.class);
+        config.set("filter", tokenFiltersNode);
+
+        return config;
     }
 }

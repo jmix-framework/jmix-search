@@ -16,22 +16,21 @@
 
 package io.jmix.search.index.mapping.analysis.impl;
 
-import io.jmix.search.index.mapping.analysis.AnalysisConfigurationStages;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public class TokenizerConfigurer implements TokenizerConfigurationStages {
-    //todo
-    @Override
-    public AnalysisConfigurationStages.SetupParameters configureBuiltInTokenizer(String tokenizerTypeName) {
-        return null;
+public class TokenizerConfigurer extends AnalysisElementConfigurer implements TokenizerConfigurationStages {
+
+    protected TokenizerConfigurer(String name) {
+        super(name);
     }
 
     @Override
-    public void withNativeConfiguration(String nativeConfiguration) {
-
+    protected AnalysisElementType getType() {
+        return AnalysisElementType.TOKENIZER;
     }
 
     @Override
-    public AnalysisConfigurationStages.SetupParameters withParameter(String key, Object value) {
-        return null;
+    protected ObjectNode createCustomConfig() {
+        throw new RuntimeException("Unable to build custom tokenizer");
     }
 }

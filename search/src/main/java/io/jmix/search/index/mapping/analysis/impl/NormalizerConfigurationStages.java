@@ -18,6 +18,9 @@ package io.jmix.search.index.mapping.analysis.impl;
 
 import io.jmix.search.index.mapping.analysis.AnalysisConfigurationStages;
 
+/**
+ * Stages of normalizer configuration fluent API
+ */
 public interface NormalizerConfigurationStages extends
         AnalysisConfigurationStages.DefineNormalizer,
         AnalysisConfigurationStages.SetupParameters,

@@ -16,40 +16,34 @@
 
 package io.jmix.search.index.mapping.analysis;
 
+/**
+ * Stages of analysis configuration fluent API
+ */
 public interface AnalysisConfigurationStages {
 
-    interface DefineAnalyzer {
-        SetupParameters configureBuiltInAnalyzer(String analyzerTypeName);
-
+    interface InitAnalyzerDefinition extends SetupNativeConfiguration, ConfigureBuiltIn {
         SetupTokenizer createCustom();
-
-        void withNativeConfiguration(String nativeConfiguration);
     }
 
-    interface DefineNormalizer {
-        SetupParameters configureBuiltInNormalizer(String normalizerTypeName);
-
+    interface DefineNormalizer extends SetupNativeConfiguration, ConfigureBuiltIn {
         SetupFilters createCustom();
+    }
 
+    interface DefineTokenizer extends SetupNativeConfiguration, ConfigureBuiltIn {
+    }
+
+    interface DefineCharacterFilter extends SetupNativeConfiguration, ConfigureBuiltIn {
+    }
+
+    interface DefineTokenFilter extends SetupNativeConfiguration, ConfigureBuiltIn {
+    }
+
+    interface SetupNativeConfiguration {
         void withNativeConfiguration(String nativeConfiguration);
     }
 
-    interface DefineTokenizer {
-        SetupParameters configureBuiltInTokenizer(String tokenizerTypeName);
-
-        void withNativeConfiguration(String nativeConfiguration);
-    }
-
-    interface DefineCharacterFilter {
-        SetupParameters configureBuiltInCharacterFilter(String characterFilterTypeName);
-
-        void withNativeConfiguration(String nativeConfiguration);
-    }
-
-    interface DefineTokenFilter {
-        SetupParameters configureBuiltInTokenFilter(String tokenFilterTypeName);
-
-        void withNativeConfiguration(String nativeConfiguration);
+    interface ConfigureBuiltIn {
+        SetupParameters configureBuiltIn(String builtInTypeName);
     }
 
     interface SetupParameters {

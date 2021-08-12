@@ -18,15 +18,48 @@ package io.jmix.search.index.mapping.analysis;
 
 import static io.jmix.search.index.mapping.analysis.AnalysisConfigurationStages.*;
 
+/**
+ * Allows to configure Elasticsearch analysis elements.
+ */
 public interface AnalysisConfigurationContext {
 
-    DefineAnalyzer defineAnalyzer(String name);
+    /**
+     * Init definition of new analyzer.
+     *
+     * @param name name of the new analyzer
+     * @return Initial stage of analyzer configuration
+     */
+    InitAnalyzerDefinition defineAnalyzer(String name);
 
+    /**
+     * Init definition of new normalizer.
+     *
+     * @param name name of the new normalizer
+     * @return Initial stage of normalizer configuration
+     */
     DefineNormalizer defineNormalizer(String name);
 
+    /**
+     * Init definition of new tokenizer.
+     *
+     * @param name name of the new tokenizer
+     * @return Initial stage of tokenizer configuration
+     */
     DefineTokenizer defineTokenizer(String name);
 
+    /**
+     * Init definition of new character filter.
+     *
+     * @param name name of the new character filter
+     * @return Initial stage of character filter configuration
+     */
     DefineCharacterFilter defineCharacterFilter(String name);
 
+    /**
+     * Init definition of new token filter
+     *
+     * @param name name of the new token filter
+     * @return Initial stage of token filter configuration
+     */
     DefineTokenFilter defineTokenFilter(String name);
 }

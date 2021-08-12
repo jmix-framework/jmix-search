@@ -16,22 +16,21 @@
 
 package io.jmix.search.index.mapping.analysis.impl;
 
-import io.jmix.search.index.mapping.analysis.AnalysisConfigurationStages;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public class TokenFilterConfigurer implements TokenFilterConfigurationStages {
-    //todo
-    @Override
-    public AnalysisConfigurationStages.SetupParameters configureBuiltInTokenFilter(String tokenFilterTypeName) {
-        return null;
+public class TokenFilterConfigurer extends AnalysisElementConfigurer implements TokenFilterConfigurationStages {
+
+    protected TokenFilterConfigurer(String name) {
+        super(name);
     }
 
     @Override
-    public void withNativeConfiguration(String nativeConfiguration) {
-
+    protected AnalysisElementType getType() {
+        return AnalysisElementType.TOKEN_FILTER;
     }
 
     @Override
-    public AnalysisConfigurationStages.SetupParameters withParameter(String key, Object value) {
-        return null;
+    protected ObjectNode createCustomConfig() {
+        throw new RuntimeException("Unable to build custom token filter");
     }
 }

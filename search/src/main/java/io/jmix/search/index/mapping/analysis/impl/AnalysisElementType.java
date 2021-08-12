@@ -16,12 +16,21 @@
 
 package io.jmix.search.index.mapping.analysis.impl;
 
-import io.jmix.search.index.mapping.analysis.AnalysisConfigurationStages;
+public enum AnalysisElementType {
 
-/**
- * Stages of tokenizer configuration fluent API
- */
-public interface TokenizerConfigurationStages extends
-        AnalysisConfigurationStages.DefineTokenizer,
-        AnalysisConfigurationStages.SetupParameters {
+    ANALYZER("analyzer"),
+    NORMALIZER("normalizer"),
+    TOKENIZER("tokenizer"),
+    CHAR_FILTER("char_filter"),
+    TOKEN_FILTER("filter");
+
+    private final String name;
+
+    AnalysisElementType(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
 }

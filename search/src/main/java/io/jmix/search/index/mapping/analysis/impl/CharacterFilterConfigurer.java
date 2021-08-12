@@ -16,22 +16,23 @@
 
 package io.jmix.search.index.mapping.analysis.impl;
 
-import io.jmix.search.index.mapping.analysis.AnalysisConfigurationStages;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public class CharacterFilterConfigurer implements CharacterFilterConfigurationStages {
-    //todo
-    @Override
-    public AnalysisConfigurationStages.SetupParameters configureBuiltInCharacterFilter(String characterFilterTypeName) {
-        return null;
+import static io.jmix.search.index.mapping.analysis.impl.AnalysisElementType.CHAR_FILTER;
+
+public class CharacterFilterConfigurer extends AnalysisElementConfigurer implements CharacterFilterConfigurationStages {
+
+    protected CharacterFilterConfigurer(String name) {
+        super(name);
     }
 
     @Override
-    public void withNativeConfiguration(String nativeConfiguration) {
-
+    protected AnalysisElementType getType() {
+        return CHAR_FILTER;
     }
 
     @Override
-    public AnalysisConfigurationStages.SetupParameters withParameter(String key, Object value) {
-        return null;
+    protected ObjectNode createCustomConfig() {
+        throw new RuntimeException("Unable to build custom character filter");
     }
 }
