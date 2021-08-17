@@ -581,33 +581,10 @@ public class AnnotatedIndexDefinitionProcessor {
         }
     }
 
-    /*private static class FieldAnalysisDetail {
-        private String name;
-        private FieldAnalysisType type;
-
-        private FieldAnalysisDetail(String name, FieldAnalysisType type) {
-            this.name = name;
-            this.type = type;
-        }
-
-        private String getName() {
-            return name;
-        }
-
-        private FieldAnalysisType getType() {
-            return type;
-        }
-    }
-
-    private enum FieldAnalysisType {
-        ANALYZER,
-        NORMALIZER
-    }*/
-
     private static class FieldAnalysisDetailsAggregator {
 
-        private Set<String> analyzers = new HashSet<>();
-        private Set<String> normalizers = new HashSet<>();
+        private final Set<String> analyzers = new HashSet<>();
+        private final Set<String> normalizers = new HashSet<>();
 
         private void process(JsonNode json) {
             if (json.isObject()) {
