@@ -29,7 +29,7 @@ public interface AnalysisConfigurationContext {
      * @param name name of the new analyzer
      * @return Initial stage of analyzer configuration
      */
-    InitAnalyzerDefinition defineAnalyzer(String name);
+    DefineAnalyzer defineAnalyzer(String name);
 
     /**
      * Init definition of new normalizer.

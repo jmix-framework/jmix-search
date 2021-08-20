@@ -40,7 +40,7 @@ public class AnalysisConfigurationContextImpl implements AnalysisConfigurationCo
     }
 
     @Override
-    public AnalysisConfigurationStages.InitAnalyzerDefinition defineAnalyzer(String name) {
+    public AnalysisConfigurationStages.DefineAnalyzer defineAnalyzer(String name) {
         Preconditions.checkNotEmptyString(name, "Analyzer name is not specified");
         AnalyzerConfigurer configurer = new AnalyzerConfigurer(name);
         analyzerConfigurers.add(configurer);

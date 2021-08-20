@@ -21,7 +21,7 @@ package io.jmix.search.index.mapping.analysis;
  */
 public interface AnalysisConfigurationStages {
 
-    interface InitAnalyzerDefinition extends SetupNativeConfiguration, ConfigureBuiltIn {
+    interface DefineAnalyzer extends SetupNativeConfiguration, ConfigureBuiltIn {
         SetupTokenizer createCustom();
     }
 

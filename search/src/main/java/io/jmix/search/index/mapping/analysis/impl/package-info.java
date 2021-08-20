@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Haulmont.
+ * Copyright 2020 Haulmont.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,9 @@
  * limitations under the License.
  */
 
+@Internal
+@NonNullApi
 package io.jmix.search.index.mapping.analysis.impl;
 
-import io.jmix.search.index.mapping.analysis.AnalysisConfigurationStages;
-
-/**
- * Stages of analyzer configuration fluent API
- */
-public interface AnalyzerConfigurationStages extends
-        AnalysisConfigurationStages.DefineAnalyzer,
-        AnalysisConfigurationStages.SetupTokenizer,
-        AnalysisConfigurationStages.SetupParameters,
-        AnalysisConfigurationStages.SetupFilters {
-}
+import io.jmix.core.annotation.Internal;
+import org.springframework.lang.NonNullApi;
