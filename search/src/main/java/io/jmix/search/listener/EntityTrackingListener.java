@@ -30,7 +30,6 @@ import io.jmix.core.metamodel.model.MetaProperty;
 import io.jmix.core.metamodel.model.MetaPropertyPath;
 import io.jmix.data.PersistenceHints;
 import io.jmix.data.StoreAwareLocator;
-import io.jmix.eclipselink.impl.JpaDataStore;
 import io.jmix.search.SearchProperties;
 import io.jmix.search.index.mapping.IndexConfigurationManager;
 import io.jmix.search.index.queue.IndexingQueueManager;
@@ -80,7 +79,7 @@ public class EntityTrackingListener implements DataStoreEventListener, DataStore
 
     @Override
     public void customize(DataStore dataStore) {
-        if (dataStore instanceof JpaDataStore) {
+        if (dataStore instanceof AbstractDataStore) {
             AbstractDataStore abstractStore = (AbstractDataStore) dataStore;
             abstractStore.registerInterceptor(this);
         }
@@ -88,6 +87,18 @@ public class EntityTrackingListener implements DataStoreEventListener, DataStore
 
     @Override
     public void beforeEntitySave(DataStoreBeforeEntitySaveEvent event) {
+        /*
+            This event is used only for resolving indexing entity instances dependent on some removed entity instance.
+            Dependencies are found before performing removal because it's required to keep all links between
+            instances involved in affected relationship.
+
+            Attempt to load dependencies within processing of EntityChangedEvent requires another transaction to access
+            before-removal database state, but it can lead to deadlock on some databases (like MSSQL, HyperSQL) without
+            additional configuration.
+
+            Found dependencies are stored into short-term in-memory cache from which they will be retrieved and enqueued
+            within processing of EntityChangedEvent.
+         */
         if (isChangeTrackingEnabled()) {
             SaveContext saveContext = event.getSaveContext();
             Collection<Object> entitiesToRemove = saveContext.getEntitiesToRemove();

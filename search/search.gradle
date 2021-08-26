@@ -23,7 +23,6 @@ archivesBaseName = 'jmix-search'
 dependencies {
     api 'io.jmix.data:jmix-data'
     implementation 'io.jmix.security:jmix-security'
-    implementation 'io.jmix.data:jmix-eclipselink'
     implementation 'com.fasterxml.jackson.core:jackson-databind'
     implementation 'com.fasterxml.jackson.core:jackson-annotations'
     implementation 'com.fasterxml.jackson.module:jackson-module-jaxb-annotations'
