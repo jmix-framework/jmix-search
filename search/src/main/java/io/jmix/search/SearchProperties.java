@@ -16,6 +16,7 @@
 
 package io.jmix.search;
 
+import io.jmix.core.Resources;
 import io.jmix.search.index.IndexSchemaManagementStrategy;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -199,6 +200,14 @@ public class SearchProperties {
     }
 
     /**
+     * @return location of CA certificate for connection to Elasticsearch service.
+     * Location is handled according to the rules of {@link Resources}
+     */
+    public String getElasticsearchSslCaCertificateLocation() {
+        return elasticsearch.ssl.caCertificateLocation;
+    }
+
+    /**
      * @return The way of index schema synchronization
      */
     public IndexSchemaManagementStrategy getIndexSchemaManagementStrategy() {
@@ -219,14 +228,25 @@ public class SearchProperties {
         protected final String url;
         protected final String login;
         protected final String password;
+        protected final SSL ssl;
 
         public Elasticsearch(
                 @DefaultValue("localhost:9200") String url,
                 String login,
-                String password) {
+                String password,
+                @DefaultValue SSL ssl) {
             this.url = url;
             this.login = login;
             this.password = password;
+            this.ssl = ssl;
+        }
+    }
+
+    protected static class SSL {
+        protected final String caCertificateLocation;
+
+        public SSL(String caCertificateLocation) {
+            this.caCertificateLocation = caCertificateLocation;
         }
     }
 }
