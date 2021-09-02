@@ -49,23 +49,25 @@ public class ElasticsearchSslConfigurer {
 
     @Nullable
     public SSLContext createSslContext() {
-        String elasticsearchCaLocation = searchProperties.getElasticsearchSslCaCertificateLocation();
+        String certificateLocation = searchProperties.getElasticsearchSslCertificateLocation();
 
-        if (Strings.isNullOrEmpty(elasticsearchCaLocation)) {
+        if (Strings.isNullOrEmpty(certificateLocation)) {
             return null;
         } else {
-            log.debug("Create SSL Context using CA certificate '{}'", elasticsearchCaLocation);
+            log.debug("Create SSL Context using CA certificate '{}'", certificateLocation);
             CertificateFactory factory = getCertificateFactory();
-            Certificate certificate = createCertificate(factory, elasticsearchCaLocation);
+            Certificate certificate = createCertificate(factory, certificateLocation);
             KeyStore keyStore = getKeyStore();
-            setCertificateToStore(keyStore, "es_client_ca", certificate);
+            setCertificateToStore(keyStore, searchProperties.getElasticsearchSslCertificateAlias(), certificate);
             return buildSslContext(keyStore);
         }
     }
 
     protected CertificateFactory getCertificateFactory() {
         try {
-            return CertificateFactory.getInstance("X.509");
+            String factoryType = searchProperties.getElasticsearchSslCertificateFactoryType();
+            log.debug("Get Certificate Factory '{}'", factoryType);
+            return CertificateFactory.getInstance(factoryType);
         } catch (CertificateException e) {
             throw new RuntimeException("Failed to create Certificate Factory", e);
         }
@@ -79,7 +81,7 @@ public class ElasticsearchSslConfigurer {
                 return factory.generateCertificate(is);
             }
         } catch (IOException e) {
-            throw new RuntimeException("Unable to load CA file", e);
+            throw new RuntimeException("Unable to load certificate file", e);
         } catch (CertificateException e) {
             throw new RuntimeException("Unable to generate certificate", e);
         }
@@ -87,7 +89,9 @@ public class ElasticsearchSslConfigurer {
 
     protected KeyStore getKeyStore() {
         try {
-            KeyStore keyStore = KeyStore.getInstance("pkcs12");
+            String keyStoreType = searchProperties.getElasticsearchSslKeyStoreType();
+            log.debug("Get Key Store '{}'", keyStoreType);
+            KeyStore keyStore = KeyStore.getInstance(keyStoreType);
             keyStore.load(null, null);
             return keyStore;
         } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {

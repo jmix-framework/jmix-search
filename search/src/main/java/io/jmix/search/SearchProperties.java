@@ -203,8 +203,29 @@ public class SearchProperties {
      * @return location of CA certificate for connection to Elasticsearch service.
      * Location is handled according to the rules of {@link Resources}
      */
-    public String getElasticsearchSslCaCertificateLocation() {
-        return elasticsearch.ssl.caCertificateLocation;
+    public String getElasticsearchSslCertificateLocation() {
+        return elasticsearch.ssl.certificateLocation;
+    }
+
+    /**
+     * @return alias what will be used to store certificate to Key Store. "es_client_ca" by default
+     */
+    public String getElasticsearchSslCertificateAlias() {
+        return elasticsearch.ssl.certificateAlias;
+    }
+
+    /**
+     * @return type of Certificate Factory. "X.509" by default
+     */
+    public String getElasticsearchSslCertificateFactoryType() {
+        return elasticsearch.ssl.certificateFactoryType;
+    }
+
+    /**
+     * @return type of Key Store. "pkcs12" by default
+     */
+    public String getElasticsearchSslKeyStoreType() {
+        return elasticsearch.ssl.keyStoreType;
     }
 
     /**
@@ -243,10 +264,20 @@ public class SearchProperties {
     }
 
     protected static class SSL {
-        protected final String caCertificateLocation;
+        protected final String certificateLocation;
+        protected final String certificateAlias;
+        protected final String certificateFactoryType;
+        protected final String keyStoreType;
 
-        public SSL(String caCertificateLocation) {
-            this.caCertificateLocation = caCertificateLocation;
+        public SSL(
+                String certificateLocation,
+                @DefaultValue("es_client_ca") String certificateAlias,
+                @DefaultValue("X.509") String certificateFactoryType,
+                @DefaultValue("pkcs12") String keyStoreType) {
+            this.certificateLocation = certificateLocation;
+            this.certificateAlias = certificateAlias;
+            this.certificateFactoryType = certificateFactoryType;
+            this.keyStoreType = keyStoreType;
         }
     }
 }
