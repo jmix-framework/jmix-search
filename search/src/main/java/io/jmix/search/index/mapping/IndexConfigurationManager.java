@@ -143,6 +143,16 @@ public class IndexConfigurationManager {
     }
 
     /**
+     * Gets local property names of provided entity involved into index update process
+     *
+     * @param entityClass entity class
+     * @return set of property names
+     */
+    public Set<String> getLocalPropertyNamesAffectedByUpdate(Class<?> entityClass) {
+        return registry.getLocalPropertyNamesAffectedByUpdate(entityClass);
+    }
+
+    /**
      * Gets metadata of entities dependent on updated main entity and its changed properties.
      *
      * @param entityClass       java class of main entity
@@ -326,6 +336,11 @@ public class IndexConfigurationManager {
         @Nullable
         Set<MetaPropertyPath> getBackRefPropertiesForDelete(Class<?> entityClass) {
             return referentiallyAffectedPropertiesForDelete.get(entityClass);
+        }
+
+        Set<String> getLocalPropertyNamesAffectedByUpdate(Class<?> entityClass) {
+            Map<String, Set<MetaPropertyPath>> updateMetadata = referentiallyAffectedPropertiesForUpdate.get(entityClass);
+            return updateMetadata == null ? Collections.emptySet() : updateMetadata.keySet();
         }
 
         Collection<String> getAllIndexedEntities() {
