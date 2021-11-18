@@ -419,6 +419,15 @@ public class JpaIndexingQueueManager implements IndexingQueueManager {
         return queueItem;
     }
 
+    /**
+     * Analyzes collection of {@link IndexingQueueItem}, determines unique entity ids
+     * and splits them among two disjoint groups: for index and for delete.
+     * <p>
+     * Group for specific id is determined by 'effective queue item' - the latest one for that id.
+     * <p>
+     * In case of multiple queue items related to single entity id
+     * it allows to perform only one actual operation on each id and remove all related queue items.
+     */
     protected class QueueItemsAggregator {
         Map<Id<?>, IndexingQueueItem> effectiveItemsForIds = new HashMap<>();
         Map<Id<?>, List<IndexingQueueItem>> itemsForIds = new HashMap<>();
@@ -428,10 +437,24 @@ public class JpaIndexingQueueManager implements IndexingQueueManager {
             groupQueueItems(queueItems);
         }
 
+        /**
+         * Gets all entity ids that should be indexed.
+         * <p>
+         * Every entity id is mapped to all {@link IndexingQueueItem} related to this id.
+         *
+         * @return Map with entity ids as keys and lists of related queue items as values
+         */
         protected Map<Id<?>, List<IndexingQueueItem>> getIndexItemsGroup() {
             return getOperationItemsGroup(IndexingOperation.INDEX);
         }
 
+        /**
+         * Gets all entity ids that should be deleted from index.
+         * <p>
+         * Every entity id is mapped to all {@link IndexingQueueItem} related to this id.
+         *
+         * @return Map with entity ids as keys and lists of related queue items as values
+         */
         protected Map<Id<?>, List<IndexingQueueItem>> getDeleteItemsGroup() {
             return getOperationItemsGroup(IndexingOperation.DELETE);
         }
@@ -449,6 +472,7 @@ public class JpaIndexingQueueManager implements IndexingQueueManager {
             queueItems.forEach(item -> {
                 Id<?> entityId = idSerialization.stringToId(item.getEntityId());
 
+                //Resolve effective queue item
                 IndexingQueueItem currentEffectiveItem = effectiveItemsForIds.get(entityId);
                 IndexingQueueItem previousEffectiveItem = null;
                 if (currentEffectiveItem == null) {
@@ -459,15 +483,20 @@ public class JpaIndexingQueueManager implements IndexingQueueManager {
                         currentEffectiveItem = item;
                     }
                 }
+
+                //Bind processed item to entity id
                 List<IndexingQueueItem> itemsForId = itemsForIds.computeIfAbsent(entityId, k -> new ArrayList<>());
                 itemsForId.add(item);
 
+                //Bind effective item to entity id
                 effectiveItemsForIds.put(entityId, currentEffectiveItem);
 
+                //Add entity id to actual operation group
                 IndexingOperation currentEffectiveOperation = currentEffectiveItem.getOperation();
                 Set<Id<?>> idsForCurrentEffectiveOperation = idsForOperations.computeIfAbsent(currentEffectiveOperation, k -> new HashSet<>());
                 idsForCurrentEffectiveOperation.add(entityId);
 
+                //Remove entity id from irrelevant operation group (if necessary)
                 if (previousEffectiveItem != null) {
                     IndexingOperation previousEffectiveOperation = previousEffectiveItem.getOperation();
                     if (!previousEffectiveOperation.equals(currentEffectiveOperation)) {
