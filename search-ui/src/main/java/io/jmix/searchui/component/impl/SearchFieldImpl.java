@@ -142,7 +142,7 @@ public class SearchFieldImpl extends ValuePickerImpl<String> implements SearchFi
     @Override
     public void setStyleName(@Nullable String name) {
         super.setStyleName(name);
-        this.component.addStyleName(SEARCH_FIELD_STYLENAME);
+        addStyleName(SEARCH_FIELD_STYLENAME);
     }
 
     @Override
