@@ -20,6 +20,7 @@ import io.jmix.search.index.annotation.AutoMappedField;
 import io.jmix.search.index.annotation.JmixEntitySearchIndex;
 import io.jmix.search.index.annotation.ManualMappingDefinition;
 import io.jmix.search.index.mapping.processor.MappingDefinition;
+import io.jmix.search.index.mapping.processor.MappingDefinitionElement;
 import io.jmix.search.index.mapping.strategy.AutoMappingStrategy;
 import test_support.entity.TestSimpleRootEntity;
 
@@ -30,11 +31,13 @@ public interface TestProgrammaticMappingWithAnnotationsIndexDefinition {
     @ManualMappingDefinition
     default MappingDefinition programmaticMapping() {
         return MappingDefinition.builder()
-                .newElement()
-                .includeProperties("name")
-                .usingFieldMappingStrategyClass(AutoMappingStrategy.class)
-                .buildElement()
-                .buildMappingDefinition();
+                .addElement(
+                        MappingDefinitionElement.builder()
+                                .includeProperties("name")
+                                .withFieldMappingStrategyClass(AutoMappingStrategy.class)
+                                .build()
+                )
+                .build();
     }
 
     @AutoMappedField(includeProperties = "secondTextValue")
