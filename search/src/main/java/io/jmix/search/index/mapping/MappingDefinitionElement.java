@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package io.jmix.search.index.mapping.processor;
+package io.jmix.search.index.mapping;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.jmix.search.index.mapping.strategy.FieldConfiguration;
 import io.jmix.search.index.mapping.strategy.FieldMappingStrategy;
-import io.jmix.search.index.mapping.strategy.NativeFieldConfiguration;
-import io.jmix.search.index.mapping.strategy.PropertyValueExtractor;
+import io.jmix.search.index.mapping.propertyvalue.PropertyValueExtractor;
 
 import javax.annotation.Nullable;
 import java.util.Collections;

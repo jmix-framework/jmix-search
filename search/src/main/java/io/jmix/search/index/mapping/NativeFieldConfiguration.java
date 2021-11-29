@@ -14,21 +14,20 @@
  * limitations under the License.
  */
 
-package io.jmix.search.index.mapping.strategy;
+package io.jmix.search.index.mapping;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import java.util.Map;
+public class NativeFieldConfiguration implements FieldConfiguration {
 
-public abstract class SimpleFieldMapper extends AbstractFieldMapper {
+    protected ObjectNode config;
 
-    @Override
-    public ObjectNode createJsonConfiguration(Map<String, Object> parameters) {
-        Map<String, Object> effectiveParameters = createEffectiveParameters(parameters);
-        effectiveParameters.put("type", getElasticsearchDatatype());
-
-        return objectMapper.convertValue(effectiveParameters, ObjectNode.class);
+    public NativeFieldConfiguration(ObjectNode config) {
+        this.config = config;
     }
 
-    protected abstract String getElasticsearchDatatype();
+    @Override
+    public ObjectNode asJson() {
+        return config.deepCopy();
+    }
 }

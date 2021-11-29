@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.jmix.search.index.mapping.processor;
+package io.jmix.search.index.mapping;
 
 import io.jmix.search.index.annotation.JmixEntitySearchIndex;
 import io.jmix.search.index.annotation.ManualMappingDefinition;

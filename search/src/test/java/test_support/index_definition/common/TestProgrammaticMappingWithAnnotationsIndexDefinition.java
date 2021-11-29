@@ -19,9 +19,9 @@ package test_support.index_definition.common;
 import io.jmix.search.index.annotation.AutoMappedField;
 import io.jmix.search.index.annotation.JmixEntitySearchIndex;
 import io.jmix.search.index.annotation.ManualMappingDefinition;
-import io.jmix.search.index.mapping.processor.MappingDefinition;
-import io.jmix.search.index.mapping.processor.MappingDefinitionElement;
-import io.jmix.search.index.mapping.strategy.AutoMappingStrategy;
+import io.jmix.search.index.mapping.MappingDefinition;
+import io.jmix.search.index.mapping.MappingDefinitionElement;
+import io.jmix.search.index.mapping.strategy.impl.AutoMappingStrategy;
 import test_support.entity.TestSimpleRootEntity;
 
 @JmixEntitySearchIndex(entity = TestSimpleRootEntity.class)

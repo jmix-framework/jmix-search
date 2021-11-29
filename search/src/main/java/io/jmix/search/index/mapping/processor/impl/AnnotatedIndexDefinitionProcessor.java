@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.jmix.search.index.mapping.processor;
+package io.jmix.search.index.mapping.processor.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -34,12 +34,22 @@ import io.jmix.search.index.IndexSettingsConfigurer;
 import io.jmix.search.index.annotation.FieldMappingAnnotation;
 import io.jmix.search.index.annotation.JmixEntitySearchIndex;
 import io.jmix.search.index.annotation.ManualMappingDefinition;
+import io.jmix.search.index.mapping.FieldConfiguration;
+import io.jmix.search.index.mapping.NativeFieldConfiguration;
 import io.jmix.search.index.mapping.DisplayedNameDescriptor;
 import io.jmix.search.index.mapping.IndexMappingConfiguration;
 import io.jmix.search.index.mapping.MappingFieldDescriptor;
 import io.jmix.search.index.mapping.analysis.impl.AnalysisElementConfiguration;
 import io.jmix.search.index.mapping.analysis.impl.IndexAnalysisElementsRegistry;
-import io.jmix.search.index.mapping.processor.MappingDefinition.MappingDefinitionBuilder;
+import io.jmix.search.index.mapping.fieldmapper.impl.TextFieldMapper;
+import io.jmix.search.index.mapping.processor.FieldAnnotationProcessor;
+import io.jmix.search.index.mapping.MappingDefinition;
+import io.jmix.search.index.mapping.MappingDefinition.MappingDefinitionBuilder;
+import io.jmix.search.index.mapping.MappingDefinitionElement;
+import io.jmix.search.index.mapping.processor.MappingFieldAnnotationProcessorsRegistry;
+import io.jmix.search.index.mapping.propertyvalue.impl.DisplayedNameValueExtractor;
+import io.jmix.search.index.mapping.propertyvalue.PropertyValueExtractor;
+import io.jmix.search.index.mapping.propertyvalue.PropertyValueExtractorProvider;
 import io.jmix.search.index.mapping.strategy.*;
 import io.jmix.search.utils.PropertyTools;
 import org.apache.commons.lang3.StringUtils;

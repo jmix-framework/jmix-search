@@ -14,9 +14,19 @@
  * limitations under the License.
  */
 
-@NonNullApi
-@Experimental
-package io.jmix.search.index.mapping.analysis;
+package io.jmix.search.index.mapping;
 
-import io.jmix.core.annotation.Experimental;
-import org.springframework.lang.NonNullApi;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+/**
+ * Contains configuration of index field.
+ */
+public interface FieldConfiguration {
+
+    /**
+     * Provides field configuration as Elasticsearch-native json.
+     *
+     * @return json with field configuration
+     */
+    ObjectNode asJson();
+}
