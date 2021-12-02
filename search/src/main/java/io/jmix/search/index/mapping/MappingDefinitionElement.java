@@ -37,9 +37,9 @@ public class MappingDefinitionElement {
     protected final String[] excludedProperties;
     protected final Class<? extends FieldMappingStrategy> fieldMappingStrategyClass;
     protected final FieldMappingStrategy fieldMappingStrategy;
-    protected final FieldConfiguration explicitFieldConfiguration;
-    protected final PropertyValueExtractor explicitPropertyValueExtractor;
-    protected final Integer explicitOrder;
+    protected final FieldConfiguration fieldConfiguration;
+    protected final PropertyValueExtractor propertyValueExtractor;
+    protected final Integer order;
     protected final Map<String, Object> parameters;
 
     protected MappingDefinitionElement(MappingDefinitionElementBuilder builder) {
@@ -47,9 +47,9 @@ public class MappingDefinitionElement {
         this.excludedProperties = builder.excludedProperties;
         this.fieldMappingStrategyClass = builder.fieldMappingStrategyClass;
         this.fieldMappingStrategy = builder.fieldMappingStrategy;
-        this.explicitFieldConfiguration = builder.explicitFieldConfiguration;
-        this.explicitPropertyValueExtractor = builder.explicitPropertyValueExtractor;
-        this.explicitOrder = builder.explicitOrder;
+        this.fieldConfiguration = builder.fieldConfiguration;
+        this.propertyValueExtractor = builder.propertyValueExtractor;
+        this.order = builder.order;
         this.parameters = builder.parameters == null ? Collections.emptyMap() : builder.parameters;
     }
 
@@ -75,7 +75,7 @@ public class MappingDefinitionElement {
      * Provides {@link FieldMappingStrategy} implementation class that should be used to map properties.
      * <p>
      * Can be null if strategy is defined as instance (see {@link #getFieldMappingStrategy()})
-     * or configuration is specified explicitly (see {@link #getExplicitFieldConfiguration()})
+     * or configuration is specified explicitly (see {@link #getFieldConfiguration()})
      *
      * @return {@link FieldMappingStrategy} implementation class
      */
@@ -88,7 +88,7 @@ public class MappingDefinitionElement {
      * Provides {@link FieldMappingStrategy} instance that should be used to map properties.
      * <p>
      * Can be null if strategy is defined as class (see {@link #getFieldMappingStrategyClass()})
-     * or configuration is specified explicitly (see {@link #getExplicitFieldConfiguration()})
+     * or configuration is specified explicitly (see {@link #getFieldConfiguration()})
      * <p>
      * {@link MappingDefinitionElement#getFieldMappingStrategyClass()} is ignored if this instance is set.
      *
@@ -111,8 +111,8 @@ public class MappingDefinitionElement {
      * @return field configuration
      */
     @Nullable
-    public FieldConfiguration getExplicitFieldConfiguration() {
-        return explicitFieldConfiguration;
+    public FieldConfiguration getFieldConfiguration() {
+        return fieldConfiguration;
     }
 
     /**
@@ -126,8 +126,8 @@ public class MappingDefinitionElement {
      * @return property value extractor
      */
     @Nullable
-    public PropertyValueExtractor getExplicitPropertyValueExtractor() {
-        return explicitPropertyValueExtractor;
+    public PropertyValueExtractor getPropertyValueExtractor() {
+        return propertyValueExtractor;
     }
 
     /**
@@ -138,8 +138,8 @@ public class MappingDefinitionElement {
      * @return order
      */
     @Nullable
-    public Integer getExplicitOrder() {
-        return explicitOrder;
+    public Integer getOrder() {
+        return order;
     }
 
     /**
@@ -166,9 +166,9 @@ public class MappingDefinitionElement {
         private String[] excludedProperties = new String[0];
         private Class<? extends FieldMappingStrategy> fieldMappingStrategyClass;
         private FieldMappingStrategy fieldMappingStrategy;
-        private FieldConfiguration explicitFieldConfiguration;
-        private PropertyValueExtractor explicitPropertyValueExtractor;
-        private Integer explicitOrder = null;
+        private FieldConfiguration fieldConfiguration;
+        private PropertyValueExtractor propertyValueExtractor;
+        private Integer order = null;
         private Map<String, Object> parameters = null;
 
         private MappingDefinitionElementBuilder() {
@@ -211,7 +211,7 @@ public class MappingDefinitionElement {
          * <ul>
          *     <li>{@link FieldMappingStrategy} implementation class via this method</li>
          *     <li>{@link FieldMappingStrategy} instance via {@link #withFieldMappingStrategy} method</li>
-         *     <li>Explicit native configuration via {@link #withExplicitFieldConfiguration} methods</li>
+         *     <li>Explicit native configuration via {@link #withFieldConfiguration} methods</li>
          * </ul>
          * <p>
          * If some of them are defined at the same time:
@@ -223,8 +223,8 @@ public class MappingDefinitionElement {
          * @param fieldMappingStrategyClass class implements {@link FieldMappingStrategy}
          * @return builder
          * @see #withFieldMappingStrategy
-         * @see #withExplicitFieldConfiguration(String)
-         * @see #withExplicitFieldConfiguration(ObjectNode)
+         * @see #withFieldConfiguration(String)
+         * @see #withFieldConfiguration(ObjectNode)
          */
         public MappingDefinitionElementBuilder withFieldMappingStrategyClass(Class<? extends FieldMappingStrategy> fieldMappingStrategyClass) {
             this.fieldMappingStrategyClass = fieldMappingStrategyClass;
@@ -238,7 +238,7 @@ public class MappingDefinitionElement {
          * <ul>
          *     <li>{@link FieldMappingStrategy} implementation class via {@link #withFieldMappingStrategyClass} method</li>
          *     <li>{@link FieldMappingStrategy} instance via this method</li>
-         *     <li>Explicit native configuration via {@link #withExplicitFieldConfiguration} methods</li>
+         *     <li>Explicit native configuration via {@link #withFieldConfiguration} methods</li>
          * </ul>
          * <p>
          * If some of them are defined at the same time:
@@ -250,8 +250,8 @@ public class MappingDefinitionElement {
          * @param fieldMappingStrategy {@link FieldMappingStrategy} instance
          * @return builder
          * @see #withFieldMappingStrategyClass
-         * @see #withExplicitFieldConfiguration(String)
-         * @see #withExplicitFieldConfiguration(ObjectNode)
+         * @see #withFieldConfiguration(String)
+         * @see #withFieldConfiguration(ObjectNode)
          */
         public MappingDefinitionElementBuilder withFieldMappingStrategy(FieldMappingStrategy fieldMappingStrategy) {
             this.fieldMappingStrategy = fieldMappingStrategy;
@@ -304,7 +304,7 @@ public class MappingDefinitionElement {
          * <ul>
          *     <li>{@link FieldMappingStrategy} implementation class via {@link #withFieldMappingStrategyClass} method</li>
          *     <li>{@link FieldMappingStrategy} instance via {@link #withFieldMappingStrategy} method</li>
-         *     <li>Explicit native configuration via {@link #withExplicitFieldConfiguration} methods</li>
+         *     <li>Explicit native configuration via {@link #withFieldConfiguration} methods</li>
          * </ul>
          * <p>
          * If some of them are defined at the same time:
@@ -318,12 +318,12 @@ public class MappingDefinitionElement {
          * @throws RuntimeException if provided string is not a well-formed json object
          * @see #withFieldMappingStrategyClass
          * @see #withFieldMappingStrategy
-         * @see #withExplicitFieldConfiguration(ObjectNode)
+         * @see #withFieldConfiguration(ObjectNode)
          */
-        public MappingDefinitionElementBuilder withExplicitFieldConfiguration(String configuration) {
+        public MappingDefinitionElementBuilder withFieldConfiguration(String configuration) {
             try {
                 ObjectNode configNode = mapper.readValue(configuration, ObjectNode.class);
-                return withExplicitFieldConfiguration(configNode);
+                return withFieldConfiguration(configNode);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException("Unable to parse native configuration", e);
             }
@@ -345,7 +345,7 @@ public class MappingDefinitionElement {
          * <ul>
          *     <li>{@link FieldMappingStrategy} implementation class via {@link #withFieldMappingStrategyClass} method</li>
          *     <li>{@link FieldMappingStrategy} instance via {@link #withFieldMappingStrategy} method</li>
-         *     <li>Explicit native configuration via {@link #withExplicitFieldConfiguration} methods</li>
+         *     <li>Explicit native configuration via {@link #withFieldConfiguration} methods</li>
          * </ul>
          * <p>
          * If some of them are defined at the same time:
@@ -358,10 +358,10 @@ public class MappingDefinitionElement {
          * @return builder
          * @see #withFieldMappingStrategyClass
          * @see #withFieldMappingStrategy
-         * @see #withExplicitFieldConfiguration(String)
+         * @see #withFieldConfiguration(String)
          */
-        public MappingDefinitionElementBuilder withExplicitFieldConfiguration(ObjectNode configuration) {
-            this.explicitFieldConfiguration = FieldConfiguration.create(configuration);
+        public MappingDefinitionElementBuilder withFieldConfiguration(ObjectNode configuration) {
+            this.fieldConfiguration = FieldConfiguration.create(configuration);
             return this;
         }
 
@@ -375,11 +375,11 @@ public class MappingDefinitionElement {
          *
          * @param propertyValueExtractor property value extractor
          * @return builder
-         * @see #withExplicitFieldConfiguration(String)
-         * @see #withExplicitFieldConfiguration(ObjectNode)
+         * @see #withFieldConfiguration(String)
+         * @see #withFieldConfiguration(ObjectNode)
          */
-        public MappingDefinitionElementBuilder withExplicitPropertyValueExtractor(PropertyValueExtractor propertyValueExtractor) {
-            this.explicitPropertyValueExtractor = propertyValueExtractor;
+        public MappingDefinitionElementBuilder withPropertyValueExtractor(PropertyValueExtractor propertyValueExtractor) {
+            this.propertyValueExtractor = propertyValueExtractor;
             return this;
         }
 
@@ -390,8 +390,8 @@ public class MappingDefinitionElement {
          * @param order order
          * @return builder
          */
-        public MappingDefinitionElementBuilder withExplicitOrder(int order) {
-            this.explicitOrder = order;
+        public MappingDefinitionElementBuilder withOrder(int order) {
+            this.order = order;
             return this;
         }
 

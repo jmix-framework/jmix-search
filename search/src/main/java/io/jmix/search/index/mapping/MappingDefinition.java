@@ -58,7 +58,7 @@ import java.util.List;
  *                         MappingDefinitionElement.builder()
  *                                 .includeProperties("name")
  *                                 .withFieldMappingStrategy(autoMappingStrategy)
- *                                 .withExplicitFieldConfiguration(
+ *                                 .withFieldConfiguration(
  *                                         "{\n" +
  *                                         "    \"type\": \"text\",\n" +
  *                                         "    \"analyzer\": \"standard\",\n" +
@@ -70,14 +70,14 @@ import java.util.List;
  *                 .addElement(
  *                         MappingDefinitionElement.builder()
  *                                 .includeProperties("description")
- *                                 .withExplicitFieldConfiguration(
+ *                                 .withFieldConfiguration(
  *                                         "{\n" +
  *                                         "    \"type\": \"text\",\n" +
  *                                         "    \"analyzer\": \"english\"\n" +
  *                                         "}"
  *                                 )
- *                                 .withExplicitPropertyValueExtractor(simplePropertyValueExtractor)
- *                                 .withExplicitOrder(1)
+ *                                 .withPropertyValueExtractor(simplePropertyValueExtractor)
+ *                                 .withOrder(1)
  *                                 .build()
  *                 )
  *                 .build();
