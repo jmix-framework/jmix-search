@@ -31,12 +31,59 @@ import java.util.List;
  * Such method should fulfil the following requirements:
  * <ul>
  *     <li>Annotated with {@link ManualMappingDefinition}</li>
+ *     <li>with any name</li>
  *     <li>default</li>
  *     <li>With return type - {@link MappingDefinition}</li>
  *     <li>With Spring beans as parameters</li>
  * </ul>
  * <p>
  * {@link MappingDefinition#builder()} and {@link MappingDefinitionElement#builder()} should be used to create content.
+ * <p>
+ * Example:<pre>
+ * &#64;JmixEntitySearchIndex(entity = Customer.class)
+ * public interface CustomerIndexDefinition {
+ *
+ *     &#64;ManualMappingDefinition
+ *     default MappingDefinition mapping(AutoMappingStrategy autoMappingStrategy,
+ *                                       SimplePropertyValueExtractor simplePropertyValueExtractor) {
+ *         return MappingDefinition.builder()
+ *                 .addElement(
+ *                         MappingDefinitionElement.builder()
+ *                                 .includeProperties("*")
+ *                                 .excludeProperties("name", "description")
+ *                                 .withFieldMappingStrategyClass(AutoMappingStrategy.class)
+ *                                 .build()
+ *                 )
+ *                 .addElement(
+ *                         MappingDefinitionElement.builder()
+ *                                 .includeProperties("name")
+ *                                 .withFieldMappingStrategy(autoMappingStrategy)
+ *                                 .withExplicitFieldConfiguration(
+ *                                         "{\n" +
+ *                                         "    \"type\": \"text\",\n" +
+ *                                         "    \"analyzer\": \"standard\",\n" +
+ *                                         "    \"boost\": 2\n" +
+ *                                         "}"
+ *                                 )
+ *                                 .build()
+ *                 )
+ *                 .addElement(
+ *                         MappingDefinitionElement.builder()
+ *                                 .includeProperties("description")
+ *                                 .withExplicitFieldConfiguration(
+ *                                         "{\n" +
+ *                                         "    \"type\": \"text\",\n" +
+ *                                         "    \"analyzer\": \"english\"\n" +
+ *                                         "}"
+ *                                 )
+ *                                 .withExplicitPropertyValueExtractor(simplePropertyValueExtractor)
+ *                                 .withExplicitOrder(1)
+ *                                 .build()
+ *                 )
+ *                 .build();
+ *     }
+ * }
+ * </pre>
  * <p>
  * <b>Note:</b> if definition method has implementation any field-mapping annotations on it will be ignored
  */

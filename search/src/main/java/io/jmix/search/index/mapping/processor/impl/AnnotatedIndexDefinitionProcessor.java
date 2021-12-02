@@ -34,23 +34,18 @@ import io.jmix.search.index.IndexSettingsConfigurer;
 import io.jmix.search.index.annotation.FieldMappingAnnotation;
 import io.jmix.search.index.annotation.JmixEntitySearchIndex;
 import io.jmix.search.index.annotation.ManualMappingDefinition;
-import io.jmix.search.index.mapping.FieldConfiguration;
-import io.jmix.search.index.mapping.NativeFieldConfiguration;
-import io.jmix.search.index.mapping.DisplayedNameDescriptor;
-import io.jmix.search.index.mapping.IndexMappingConfiguration;
-import io.jmix.search.index.mapping.MappingFieldDescriptor;
+import io.jmix.search.index.mapping.*;
+import io.jmix.search.index.mapping.MappingDefinition.MappingDefinitionBuilder;
 import io.jmix.search.index.mapping.analysis.impl.AnalysisElementConfiguration;
 import io.jmix.search.index.mapping.analysis.impl.IndexAnalysisElementsRegistry;
 import io.jmix.search.index.mapping.fieldmapper.impl.TextFieldMapper;
 import io.jmix.search.index.mapping.processor.FieldAnnotationProcessor;
-import io.jmix.search.index.mapping.MappingDefinition;
-import io.jmix.search.index.mapping.MappingDefinition.MappingDefinitionBuilder;
-import io.jmix.search.index.mapping.MappingDefinitionElement;
 import io.jmix.search.index.mapping.processor.MappingFieldAnnotationProcessorsRegistry;
-import io.jmix.search.index.mapping.propertyvalue.impl.DisplayedNameValueExtractor;
 import io.jmix.search.index.mapping.propertyvalue.PropertyValueExtractor;
 import io.jmix.search.index.mapping.propertyvalue.PropertyValueExtractorProvider;
-import io.jmix.search.index.mapping.strategy.*;
+import io.jmix.search.index.mapping.propertyvalue.impl.DisplayedNameValueExtractor;
+import io.jmix.search.index.mapping.strategy.FieldMappingStrategy;
+import io.jmix.search.index.mapping.strategy.FieldMappingStrategyProvider;
 import io.jmix.search.utils.PropertyTools;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -541,7 +536,7 @@ public class AnnotatedIndexDefinitionProcessor {
                 ObjectNode explicitRoot = explicitFieldConfiguration.asJson().deepCopy();
                 strategyRoot.setAll(explicitRoot);
 
-                effectiveFieldConfiguration = new NativeFieldConfiguration(strategyRoot);
+                effectiveFieldConfiguration = FieldConfiguration.create(strategyRoot);
             }
         }
         return effectiveFieldConfiguration;
@@ -549,7 +544,7 @@ public class AnnotatedIndexDefinitionProcessor {
 
     protected DisplayedNameDescriptor createDisplayedNameDescriptor(MetaClass metaClass) {
         DisplayedNameDescriptor displayedNameDescriptor = new DisplayedNameDescriptor();
-        FieldConfiguration fieldConfiguration = new NativeFieldConfiguration(
+        FieldConfiguration fieldConfiguration = FieldConfiguration.create(
                 new TextFieldMapper().createJsonConfiguration(Collections.emptyMap())
         );
         displayedNameDescriptor.setFieldConfiguration(fieldConfiguration);

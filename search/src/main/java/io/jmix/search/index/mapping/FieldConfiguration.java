@@ -17,16 +17,31 @@
 package io.jmix.search.index.mapping;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.jmix.core.common.util.Preconditions;
 
 /**
  * Contains configuration of index field.
  */
-public interface FieldConfiguration {
+public class FieldConfiguration {
+
+    protected ObjectNode config;
+
+    protected FieldConfiguration(ObjectNode config) {
+        this.config = config;
+    }
 
     /**
      * Provides field configuration as Elasticsearch-native json.
      *
      * @return json with field configuration
      */
-    ObjectNode asJson();
+    public ObjectNode asJson() {
+        return config.deepCopy();
+    }
+
+    public static FieldConfiguration create(ObjectNode config) {
+        Preconditions.checkNotNullArgument(config);
+
+        return new FieldConfiguration(config);
+    }
 }
