@@ -87,6 +87,26 @@ public interface IndexingQueueManager {
      */
     int enqueueIndexAll(String entityName);
 
+    void initEnqueueIndexAll();
+
+    boolean initEnqueueIndexAll(String entityName);
+
+    boolean initEnqueueIndexAll(String entityName, boolean restart);
+
+    boolean suspendEnqueueIndexAll(String entityName);
+
+    boolean resumeEnqueueingIndexAll(String entityName);
+
+    boolean stopEnqueueIndexAll(String entityName);
+
+    int enqueueNextBatch();
+
+    int enqueueNextBatch(int batchSize);
+
+    int enqueueNextBatch(String entityName);
+
+    int enqueueNextBatch(String entityName, int batchSize);
+
     /**
      * Sends provided entity instance to indexing queue in order to delete it from index.
      *
