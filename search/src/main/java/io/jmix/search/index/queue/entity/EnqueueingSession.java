@@ -28,6 +28,9 @@ import javax.validation.constraints.NotNull;
 import java.util.Date;
 import java.util.UUID;
 
+/**
+ * Keeps progress of async enqueueing process.
+ */
 @JmixEntity
 @Table(name = "SEARCH_ENQUEUEING_SESSION")
 @Entity(name = "search_EnqueueingSession")

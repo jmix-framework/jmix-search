@@ -49,10 +49,26 @@ public class EnqueueingSessionManager {
     @Autowired
     protected IndexingLocker locker;
 
+    /**
+     * Initializes session for provided entity.
+     * New session will be created if it doesn't exist.
+     * Existing session with {@link EnqueueingSessionAction#STOP} action will be reset to initial state.
+     * @param entityName entity name
+     * @return true if operation was successfully performed, false otherwise
+     */
     public boolean initSession(String entityName) {
         return initSession(entityName, false);
     }
 
+    /**
+     * Initializes session for provided entity.
+     * New session will be created if it doesn't exist.
+     * Existing session will be reset to initial state if it has {@link EnqueueingSessionAction#STOP} action
+     * or 'restart' flag is set to true.
+     * @param entityName entity name
+     * @param restart restarts existing session if true - sets ordering value to null
+     * @return true if operation was successfully performed, false otherwise
+     */
     public boolean initSession(String entityName, boolean restart) {
         return executeManagementAction(entityName, 10000, () -> {
             EnqueueingSession existingSession = getSession(entityName);
@@ -80,6 +96,11 @@ public class EnqueueingSessionManager {
         });
     }
 
+    /**
+     * Prevents session from being executed.
+     * @param entityName entity name
+     * @return true if operation was successfully performed, false otherwise
+     */
     public boolean suspendSession(String entityName) {
         return executeManagementAction(entityName, 10000, () -> {
             EnqueueingSession session = getSession(entityName);
@@ -98,6 +119,11 @@ public class EnqueueingSessionManager {
         });
     }
 
+    /**
+     * Resumes previously suspended session
+     * @param entityName entity name
+     * @return true if operation was successfully performed, false otherwise
+     */
     public boolean resumeSession(String entityName) {
         return executeManagementAction(entityName, 10000, () -> {
             EnqueueingSession session = getSession(entityName);
@@ -116,6 +142,11 @@ public class EnqueueingSessionManager {
         });
     }
 
+    /**
+     * Marks session as terminated. It can't be executed, suspended or resumed. It can only be restarted or removed.
+     * @param entityName entity name
+     * @return true if operation was successfully performed, false otherwise
+     */
     public boolean stopSession(String entityName) {
         return executeManagementAction(entityName, 10000, () -> {
             EnqueueingSession session = getSession(entityName);
@@ -130,6 +161,11 @@ public class EnqueueingSessionManager {
         });
     }
 
+    /**
+     * Removes provided session.
+     * @param session session
+     * @return true if operation was successfully performed, false otherwise
+     */
     public boolean removeSession(EnqueueingSession session) {
         String entityName = session.getEntityName();
         return executeManagementAction(entityName, 10000, () -> {
@@ -138,6 +174,11 @@ public class EnqueueingSessionManager {
         });
     }
 
+    /**
+     * Gets session for provided entity.
+     * @param entityName entity name
+     * @return existing session or null if it doesn't exist
+     */
     @Nullable
     public EnqueueingSession getSession(String entityName) {
         if (indexConfigurationManager.isDirectlyIndexed(entityName)) {
@@ -150,12 +191,21 @@ public class EnqueueingSessionManager {
         }
     }
 
+    /**
+     * Gets next existing session.
+     * @return some existing session or null if there are no sessions at all
+     */
     @Nullable
     public EnqueueingSession getNextSession() {
         Optional<EnqueueingSession> session = dataManager.load(EnqueueingSession.class).query("ORDER BY e.createdDate ASC").optional();
         return session.orElse(null);
     }
 
+    /**
+     * Updates provided session with provided ordering value.
+     * @param session session
+     * @param lastOrderingValue value
+     */
     public void updateOrderingValue(EnqueueingSession session, @Nullable Object lastOrderingValue) {
         String entityName = session.getEntityName();
         executeManagementAction(entityName, 10000, () -> {

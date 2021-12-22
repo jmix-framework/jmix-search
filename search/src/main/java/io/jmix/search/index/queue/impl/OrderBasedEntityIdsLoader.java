@@ -43,7 +43,10 @@ import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 
-public abstract class SortingBasedEntityIdsLoader implements EntityIdsLoader {
+/**
+ * Loads data using ordering property.
+ */
+public abstract class OrderBasedEntityIdsLoader implements EntityIdsLoader {
 
     private static final Logger log = LoggerFactory.getLogger(OracleEntityIdsLoader.class);
 
@@ -71,6 +74,7 @@ public abstract class SortingBasedEntityIdsLoader implements EntityIdsLoader {
 
         ResultHolder result;
         if (metadataTools.isEmbedded(orderingProperty)) {
+            log.warn("Sorted loading by embedded property is not supported - perform in-memory loading of all ids");
             result = loadAllInMemory(entityClass);
         } else {
             Object lastProcessedValue = convertRawValue(orderingProperty, lastProcessedRawOrderingValue);

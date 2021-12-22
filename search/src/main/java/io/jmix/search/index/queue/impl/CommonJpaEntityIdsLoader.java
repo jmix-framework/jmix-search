@@ -26,8 +26,11 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * Common implementation of {@link OrderBasedEntityIdsLoader}.
+ */
 @Component("search_CommonJpaEntityIdsLoader")
-public class CommonJpaEntityIdsLoader extends SortingBasedEntityIdsLoader {
+public class CommonJpaEntityIdsLoader extends OrderBasedEntityIdsLoader {
 
     @Autowired
     protected DataManager dataManager;

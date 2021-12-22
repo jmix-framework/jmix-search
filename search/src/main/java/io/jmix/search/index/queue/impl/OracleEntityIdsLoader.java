@@ -34,8 +34,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Oracle-specific implementation of {@link OrderBasedEntityIdsLoader}.
+ * Ensures that ordering and comparison works the same way.
+ */
 @Component("search_OracleEntityIdsLoader")
-public class OracleEntityIdsLoader extends SortingBasedEntityIdsLoader {
+public class OracleEntityIdsLoader extends OrderBasedEntityIdsLoader {
 
     @Autowired
     protected DataManager dataManager;

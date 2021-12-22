@@ -20,11 +20,22 @@ import io.jmix.core.metamodel.datatype.impl.EnumClass;
 
 import javax.annotation.Nullable;
 
-
+/**
+ * Action that should be performed during session processing.
+ */
 public enum EnqueueingSessionAction implements EnumClass<String> {
 
+    /**
+     * SEssion should be processed normal way.
+     */
     EXECUTE("EXECUTE"),
+    /**
+     * Session execution should be skipped.
+     */
     SKIP("SKIP"),
+    /**
+     * Session can be removed or restarted.
+     */
     STOP("STOP");
 
     private final String id;

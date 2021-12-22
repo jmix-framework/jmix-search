@@ -23,11 +23,24 @@ import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Allows to load ids of entity instances according to enqueueing session.
+ */
 @Internal
 public interface EntityIdsLoader {
 
+    /**
+     * Loads next batch of instances related to provided session.
+     *
+     * @param session   enqueueing session
+     * @param batchSize batch size
+     * @return loading result
+     */
     ResultHolder loadNextIds(EnqueueingSession session, int batchSize);
 
+    /**
+     * Keeps result of ids loading.
+     */
     class ResultHolder {
         private final List<?> ids;
         private final Object lastOrderingValue;
