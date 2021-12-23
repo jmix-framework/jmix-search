@@ -53,6 +53,7 @@ public class EnqueueingSessionManager {
      * Initializes session for provided entity.
      * New session will be created if it doesn't exist.
      * Existing session with {@link EnqueueingSessionAction#STOP} action will be reset to initial state.
+     *
      * @param entityName entity name
      * @return true if operation was successfully performed, false otherwise
      */
@@ -65,8 +66,9 @@ public class EnqueueingSessionManager {
      * New session will be created if it doesn't exist.
      * Existing session will be reset to initial state if it has {@link EnqueueingSessionAction#STOP} action
      * or 'restart' flag is set to true.
+     *
      * @param entityName entity name
-     * @param restart restarts existing session if true - sets ordering value to null
+     * @param restart    restarts existing session if true - sets ordering value to null
      * @return true if operation was successfully performed, false otherwise
      */
     public boolean initSession(String entityName, boolean restart) {
@@ -98,6 +100,7 @@ public class EnqueueingSessionManager {
 
     /**
      * Prevents session from being executed.
+     *
      * @param entityName entity name
      * @return true if operation was successfully performed, false otherwise
      */
@@ -121,6 +124,7 @@ public class EnqueueingSessionManager {
 
     /**
      * Resumes previously suspended session
+     *
      * @param entityName entity name
      * @return true if operation was successfully performed, false otherwise
      */
@@ -144,6 +148,7 @@ public class EnqueueingSessionManager {
 
     /**
      * Marks session as terminated. It can't be executed, suspended or resumed. It can only be restarted or removed.
+     *
      * @param entityName entity name
      * @return true if operation was successfully performed, false otherwise
      */
@@ -163,6 +168,7 @@ public class EnqueueingSessionManager {
 
     /**
      * Removes provided session.
+     *
      * @param session session
      * @return true if operation was successfully performed, false otherwise
      */
@@ -176,6 +182,7 @@ public class EnqueueingSessionManager {
 
     /**
      * Gets session for provided entity.
+     *
      * @param entityName entity name
      * @return existing session or null if it doesn't exist
      */
@@ -192,18 +199,23 @@ public class EnqueueingSessionManager {
     }
 
     /**
-     * Gets next existing session.
+     * Gets next existing session. Ignores session with action {@link EnqueueingSessionAction#SKIP}
+     *
      * @return some existing session or null if there are no sessions at all
      */
     @Nullable
     public EnqueueingSession getNextSession() {
-        Optional<EnqueueingSession> session = dataManager.load(EnqueueingSession.class).query("ORDER BY e.createdDate ASC").optional();
+        Optional<EnqueueingSession> session = dataManager.load(EnqueueingSession.class)
+                .query("WHERE e.action <> :action ORDER BY e.createdDate ASC")
+                .parameter("action", EnqueueingSessionAction.SKIP)
+                .optional();
         return session.orElse(null);
     }
 
     /**
      * Updates provided session with provided ordering value.
-     * @param session session
+     *
+     * @param session           session
      * @param lastOrderingValue value
      */
     public void updateOrderingValue(EnqueueingSession session, @Nullable Object lastOrderingValue) {

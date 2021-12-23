@@ -153,65 +153,104 @@ public class JpaIndexingQueueManager implements IndexingQueueManager {
     }
 
     @Override
-    public void initEnqueueIndexAll() {
+    public void initAsyncEnqueueIndexAll() {
         indexConfigurationManager.getAllIndexConfigurations().stream()
                 .map(IndexConfiguration::getEntityName)
-                .forEach(this::initEnqueueIndexAll);
+                .forEach(this::initAsyncEnqueueIndexAll);
     }
 
     @Override
-    public boolean initEnqueueIndexAll(String entityName) {
-        return initEnqueueIndexAll(entityName, false);
+    public boolean initAsyncEnqueueIndexAll(String entityName) {
+        return initAsyncEnqueueIndexAll(entityName, false);
     }
 
     @Override
-    public boolean initEnqueueIndexAll(String entityName, boolean restart) {
+    public boolean initAsyncEnqueueIndexAll(String entityName, boolean restart) {
         return enqueueingSessionManager.initSession(entityName, restart);
     }
 
     @Override
-    public boolean suspendEnqueueIndexAll(String entityName) {
+    public boolean suspendAsyncEnqueueIndexAll(String entityName) {
         return enqueueingSessionManager.suspendSession(entityName);
     }
 
     @Override
-    public boolean resumeEnqueueingIndexAll(String entityName) {
+    public boolean resumeAsyncEnqueueingIndexAll(String entityName) {
         return enqueueingSessionManager.resumeSession(entityName);
     }
 
     @Override
-    public boolean stopEnqueueIndexAll(String entityName) {
+    public boolean stopAsyncEnqueueIndexAll(String entityName) {
         return enqueueingSessionManager.stopSession(entityName);
     }
 
     @Override
-    public int enqueueNextBatch() {
-        return enqueueNextBatch(searchProperties.getReindexEntityEnqueueBatchSize());
+    public int processNextEnqueueingSession() {
+        return processNextEnqueueingSession(searchProperties.getReindexEntityEnqueueBatchSize());
     }
 
     @Override
-    public int enqueueNextBatch(int batchSize) {
-        EnqueueingSession session = enqueueingSessionManager.getNextSession();
-        if (session == null) {
-            log.trace("No enqueueing sessions found");
-            return 0;
+    public int processNextEnqueueingSession(int batchSize) {
+        EnqueueingSession session;
+        int processed = 0;
+        try {
+            authenticator.begin();
+            log.debug("Get next enqueueing session");
+            EnqueueingSessionAction currentSessionAction;
+            do {
+                session = enqueueingSessionManager.getNextSession();
+                if (session == null) {
+                    log.trace("Enqueueing session not found");
+                    break;
+                }
+                try {
+                    if (!locker.tryLockEntityForEnqueueIndexAll(session.getEntityName())) {
+                        log.info("Unable to process enqueueing session for entity '{}': currently in progress", session.getEntityName());
+                        return 0;
+                    }
+                    currentSessionAction = session.getAction();
+
+                    processed += processEnqueueingSession(session, batchSize);
+                } finally {
+                    locker.unlockEntityForEnqueueIndexAll(session.getEntityName());
+                }
+            } while (!EnqueueingSessionAction.EXECUTE.equals(currentSessionAction));
+        } finally {
+            authenticator.end();
         }
-        return processEnqueueingSession(session, batchSize);
+        return processed;
     }
 
     @Override
-    public int enqueueNextBatch(String entityName) {
-        return enqueueNextBatch(entityName, searchProperties.getReindexEntityEnqueueBatchSize());
+    public int processEnqueueingSession(String entityName) {
+        return processEnqueueingSession(entityName, searchProperties.getReindexEntityEnqueueBatchSize());
     }
 
     @Override
-    public int enqueueNextBatch(String entityName, int batchSize) {
-        EnqueueingSession session = enqueueingSessionManager.getSession(entityName);
-        if (session == null) {
-            log.trace("No enqueueing session found for entity '{}'", entityName);
-            return 0;
+    public int processEnqueueingSession(String entityName, int batchSize) {
+        EnqueueingSession session = null;
+        try {
+            authenticator.begin();
+
+            log.debug("Get enqueueing session for entity '{}'", entityName);
+            session = enqueueingSessionManager.getSession(entityName);
+            if (session == null) {
+                log.trace("Enqueueing session not found");
+                return 0;
+            }
+
+            if (!locker.tryLockEntityForEnqueueIndexAll(session.getEntityName())) {
+                log.info("Unable to process enqueueing session for entity '{}': currently in progress", session.getEntityName());
+                return 0;
+            }
+
+            return processEnqueueingSession(session, batchSize);
+        } finally {
+            if (session != null) {
+                locker.unlockEntityForEnqueueIndexAll(session.getEntityName());
+            }
+            authenticator.end();
         }
-        return processEnqueueingSession(session, batchSize);
     }
 
     @Override
@@ -274,32 +313,22 @@ public class JpaIndexingQueueManager implements IndexingQueueManager {
         }
 
         String entityName = session.getEntityName();
+        MetaClass entityClass = metadata.getClass(entityName);
 
-        if (!locker.tryLockEntityForEnqueueIndexAll(entityName)) {
-            log.info("Unable to enqueue next batch of entity '{}' for indexing: currently in progress", entityName);
-            return 0;
+        EntityIdsLoader loader = entityIdsLoaderProvider.getLoader(entityName);
+        ResultHolder resultHolder = loader.loadNextIds(session, batchSize);
+        List<?> ids = resultHolder.getIds();
+        log.debug("Next {} enqueuing instances of entity '{}': {}", ids.size(), entityName, ids);
+        int processed = processRawIds(ids, entityClass, batchSize);
+        log.debug("Processed {} instances of entity '{}'", processed, entityName);
+        if (ids.size() < batchSize) {
+            log.debug("All instances of entity '{}' have been processed", entityName);
+            enqueueingSessionManager.removeSession(session);
+        } else {
+            Object lastOrderingValue = resultHolder.getLastOrderingValue();
+            enqueueingSessionManager.updateOrderingValue(session, lastOrderingValue);
         }
-
-        try {
-            MetaClass entityClass = metadata.getClass(entityName);
-
-            EntityIdsLoader loader = entityIdsLoaderProvider.getLoader(entityName);
-            ResultHolder resultHolder = loader.loadNextIds(session, batchSize);
-            List<?> ids = resultHolder.getIds();
-            log.debug("Next enqueuing instances of entity '{}': {}", entityName, ids);
-            int processed = processRawIds(ids, entityClass, batchSize);
-            log.debug("Processed {} instances of entity '{}'", processed, entityName);
-            if (ids.size() < batchSize) {
-                log.debug("All instances of entity '{}' have been processed", entityName);
-                enqueueingSessionManager.removeSession(session);
-            } else {
-                Object lastOrderingValue = resultHolder.getLastOrderingValue();
-                enqueueingSessionManager.updateOrderingValue(session, lastOrderingValue);
-            }
-            return processed;
-        } finally {
-            locker.unlockEntityForEnqueueIndexAll(entityName);
-        }
+        return processed;
     }
 
     protected int enqueueIndexAll(String entityName, int batchSize) {

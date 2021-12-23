@@ -52,14 +52,15 @@ public class EntityIndexingManagementFacade {
     }
 
     @Authenticated
-    @ManagedOperation(description = "Enqueues all instances of all indexed entities")
+    @ManagedOperation(description = "Synchronously enqueues all instances of all indexed entities. Don't use it on a huge amount of data")
     public String enqueueIndexAll() {
         int amount = indexingQueueManager.enqueueIndexAll();
         return String.format("%d instances within all indexed entities have been enqueued", amount);
     }
 
     @Authenticated
-    @ManagedOperation(description = "Enqueues all instances of provided indexed entity")
+    @ManagedOperation(description = "Synchronously enqueues all instances of provided indexed entity. " +
+            "Don't use it on a huge amount of data")
     @ManagedOperationParameters({
             @ManagedOperationParameter(name = "entityName", description = "Name of entity configured for indexing, e.g. demo_Order")
     })
@@ -85,7 +86,7 @@ public class EntityIndexingManagementFacade {
             return inputValidationResult.getMessage();
         }
 
-        indexingQueueManager.initEnqueueIndexAll(entityName, restart);
+        indexingQueueManager.initAsyncEnqueueIndexAll(entityName, restart);
         return String.format("Async enqueueing process has been initialized for entity '%s'", entityName);
     }
 
@@ -100,7 +101,7 @@ public class EntityIndexingManagementFacade {
             return inputValidationResult.getMessage();
         }
 
-        indexingQueueManager.suspendEnqueueIndexAll(entityName);
+        indexingQueueManager.suspendAsyncEnqueueIndexAll(entityName);
         return String.format("Async enqueueing process has been suspended for entity '%s'", entityName);
     }
 
@@ -115,7 +116,7 @@ public class EntityIndexingManagementFacade {
             return inputValidationResult.getMessage();
         }
 
-        indexingQueueManager.resumeEnqueueingIndexAll(entityName);
+        indexingQueueManager.resumeAsyncEnqueueingIndexAll(entityName);
         return String.format("Async enqueueing process has been resumed for entity '%s'", entityName);
     }
 
@@ -130,7 +131,7 @@ public class EntityIndexingManagementFacade {
             return inputValidationResult.getMessage();
         }
 
-        indexingQueueManager.stopEnqueueIndexAll(entityName);
+        indexingQueueManager.stopAsyncEnqueueIndexAll(entityName);
         return String.format("Async enqueueing process has been stopped for entity '%s'", entityName);
     }
 
@@ -145,14 +146,14 @@ public class EntityIndexingManagementFacade {
             return inputValidationResult.getMessage();
         }
 
-        int processed = indexingQueueManager.enqueueNextBatch(entityName);
+        int processed = indexingQueueManager.processEnqueueingSession(entityName);
         return String.format("Enqueued %d instances of entity '%s'", processed, entityName);
     }
 
     @Authenticated
     @ManagedOperation(description = "Async enqueue next batch of next available session")
     public String enqueueNextBatch() {
-        int processed = indexingQueueManager.enqueueNextBatch();
+        int processed = indexingQueueManager.processNextEnqueueingSession();
         return String.format("Enqueued %d instances", processed);
     }
 
