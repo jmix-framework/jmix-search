@@ -16,13 +16,8 @@
 
 package io.jmix.search.index.queue.impl;
 
-import io.jmix.core.DataManager;
-import io.jmix.core.Metadata;
-import io.jmix.core.MetadataTools;
 import io.jmix.core.ValueLoadContext;
 import io.jmix.core.entity.KeyValueEntity;
-import io.jmix.data.StoreAwareLocator;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -40,15 +35,6 @@ import java.util.Map;
  */
 @Component("search_OracleEntityIdsLoader")
 public class OracleEntityIdsLoader extends OrderBasedEntityIdsLoader {
-
-    @Autowired
-    protected DataManager dataManager;
-    @Autowired
-    protected Metadata metadata;
-    @Autowired
-    protected MetadataTools metadataTools;
-    @Autowired
-    protected StoreAwareLocator storeAwareLocator;
 
     protected List<KeyValueEntity> loadValues(ValueLoadContext valueLoadContext) {
         String storeName = valueLoadContext.getStoreName();

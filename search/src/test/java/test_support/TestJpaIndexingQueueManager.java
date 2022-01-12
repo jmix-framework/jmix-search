@@ -16,11 +16,13 @@
 
 package test_support;
 
+import io.jmix.core.metamodel.model.MetaClass;
 import io.jmix.search.index.queue.entity.IndexingQueueItem;
 import io.jmix.search.index.queue.impl.JpaIndexingQueueManager;
 
 import javax.validation.constraints.NotNull;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * JpaIndexingQueueManager with additional test tracker of queue items
@@ -29,13 +31,33 @@ public class TestJpaIndexingQueueManager extends JpaIndexingQueueManager {
 
     protected final TestIndexingQueueItemsTracker indexingQueueItemsTracker;
 
+    protected long idsProcessingDelay = 0;
+
     public TestJpaIndexingQueueManager(TestIndexingQueueItemsTracker indexingQueueItemsTracker) {
         this.indexingQueueItemsTracker = indexingQueueItemsTracker;
+    }
+
+    public long getIdsProcessingDelayMs() {
+        return idsProcessingDelay;
+    }
+
+    public void setIdsProcessingDelayMs(long idsProcessingDelay) {
+        this.idsProcessingDelay = idsProcessingDelay;
     }
 
     @Override
     protected int enqueue(@NotNull Collection<IndexingQueueItem> queueItems) {
         indexingQueueItemsTracker.accept(queueItems);
         return super.enqueue(queueItems);
+    }
+
+    @Override
+    protected int processRawIds(List<?> rawIds, MetaClass metaClass, int batchSize) {
+        try {
+            Thread.sleep(idsProcessingDelay);
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Interrupted during processing delay", e);
+        }
+        return super.processRawIds(rawIds, metaClass, batchSize);
     }
 }

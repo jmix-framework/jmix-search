@@ -88,7 +88,7 @@ public class StartupIndexSynchronizer {
                             return entitiesAllowedToEnqueue.isEmpty() || entitiesAllowedToEnqueue.contains(config.getEntityName());
                         })
                         .collect(Collectors.toList());
-                indexConfigurationsToEnqueueAll.forEach(config -> indexingQueueManager.initAsyncEnqueueIndexAll(config.getEntityName(), true));
+                indexConfigurationsToEnqueueAll.forEach(config -> indexingQueueManager.initAsyncEnqueueIndexAll(config.getEntityName()));
             }
             log.info("Finish initial index synchronization");
         } catch (Exception e) {

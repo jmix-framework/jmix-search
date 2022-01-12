@@ -16,12 +16,8 @@
 
 package io.jmix.search.index.queue.impl;
 
-import io.jmix.core.DataManager;
-import io.jmix.core.Metadata;
-import io.jmix.core.MetadataTools;
 import io.jmix.core.ValueLoadContext;
 import io.jmix.core.entity.KeyValueEntity;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -31,13 +27,6 @@ import java.util.List;
  */
 @Component("search_CommonJpaEntityIdsLoader")
 public class CommonJpaEntityIdsLoader extends OrderBasedEntityIdsLoader {
-
-    @Autowired
-    protected DataManager dataManager;
-    @Autowired
-    protected Metadata metadata;
-    @Autowired
-    protected MetadataTools metadataTools;
 
     @Override
     protected List<KeyValueEntity> loadValues(ValueLoadContext valueLoadContext) {

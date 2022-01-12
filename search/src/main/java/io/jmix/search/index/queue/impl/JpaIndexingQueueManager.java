@@ -153,6 +153,11 @@ public class JpaIndexingQueueManager implements IndexingQueueManager {
     }
 
     @Override
+    public List<String> getEntityNamesOfEnqueueingSessions() {
+        return enqueueingSessionManager.loadEntityNamesOfSessions();
+    }
+
+    @Override
     public void initAsyncEnqueueIndexAll() {
         indexConfigurationManager.getAllIndexConfigurations().stream()
                 .map(IndexConfiguration::getEntityName)
@@ -161,12 +166,7 @@ public class JpaIndexingQueueManager implements IndexingQueueManager {
 
     @Override
     public boolean initAsyncEnqueueIndexAll(String entityName) {
-        return initAsyncEnqueueIndexAll(entityName, false);
-    }
-
-    @Override
-    public boolean initAsyncEnqueueIndexAll(String entityName, boolean restart) {
-        return enqueueingSessionManager.initSession(entityName, restart);
+        return enqueueingSessionManager.initSession(entityName);
     }
 
     @Override
@@ -175,13 +175,13 @@ public class JpaIndexingQueueManager implements IndexingQueueManager {
     }
 
     @Override
-    public boolean resumeAsyncEnqueueingIndexAll(String entityName) {
+    public boolean resumeAsyncEnqueueIndexAll(String entityName) {
         return enqueueingSessionManager.resumeSession(entityName);
     }
 
     @Override
-    public boolean stopAsyncEnqueueIndexAll(String entityName) {
-        return enqueueingSessionManager.stopSession(entityName);
+    public boolean terminateAsyncEnqueueIndexAll(String entityName) {
+        return enqueueingSessionManager.removeSession(entityName);
     }
 
     @Override
@@ -191,34 +191,26 @@ public class JpaIndexingQueueManager implements IndexingQueueManager {
 
     @Override
     public int processNextEnqueueingSession(int batchSize) {
-        EnqueueingSession session;
-        int processed = 0;
         try {
             authenticator.begin();
-            log.debug("Get next enqueueing session");
-            EnqueueingSessionAction currentSessionAction;
-            do {
-                session = enqueueingSessionManager.getNextSession();
-                if (session == null) {
-                    log.trace("Enqueueing session not found");
-                    break;
+            log.debug("Get next active enqueueing session");
+            EnqueueingSession session = enqueueingSessionManager.getNextActiveSession();
+            if (session == null) {
+                log.trace("Active enqueueing session not found");
+                return 0;
+            }
+            try {
+                if (!locker.tryLockEntityForEnqueueIndexAll(session.getEntityName())) {
+                    log.info("Unable to process enqueueing session for entity '{}': currently in progress", session.getEntityName());
+                    return 0;
                 }
-                try {
-                    if (!locker.tryLockEntityForEnqueueIndexAll(session.getEntityName())) {
-                        log.info("Unable to process enqueueing session for entity '{}': currently in progress", session.getEntityName());
-                        return 0;
-                    }
-                    currentSessionAction = session.getAction();
-
-                    processed += processEnqueueingSession(session, batchSize);
-                } finally {
-                    locker.unlockEntityForEnqueueIndexAll(session.getEntityName());
-                }
-            } while (!EnqueueingSessionAction.EXECUTE.equals(currentSessionAction));
+                return processEnqueueingSession(session, batchSize);
+            } finally {
+                locker.unlockEntityForEnqueueIndexAll(session.getEntityName());
+            }
         } finally {
             authenticator.end();
         }
-        return processed;
     }
 
     @Override
@@ -293,14 +285,11 @@ public class JpaIndexingQueueManager implements IndexingQueueManager {
     }
 
     protected int processEnqueueingSession(EnqueueingSession session, int batchSize) {
-        EnqueueingSessionAction action = session.getAction();
-        switch (action) {
-            case EXECUTE:
+        EnqueueingSessionStatus status = session.getStatus();
+        switch (status) {
+            case ACTIVE:
                 return enqueueNextBatchInternal(session, batchSize);
-            case STOP:
-                enqueueingSessionManager.removeSession(session);
-                return 0;
-            case SKIP:
+            case SUSPENDED:
                 log.debug("Skip session for entity '{}'", session.getEntityName());
             default:
                 return 0;

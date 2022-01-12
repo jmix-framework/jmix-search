@@ -18,9 +18,8 @@ package async_enqueueing;
 
 import io.jmix.core.DataManager;
 import io.jmix.core.Metadata;
-import io.jmix.search.index.queue.IndexingQueueManager;
 import io.jmix.search.index.queue.entity.EnqueueingSession;
-import io.jmix.search.index.queue.impl.EnqueueingSessionAction;
+import io.jmix.search.index.queue.impl.EnqueueingSessionStatus;
 import io.jmix.search.index.queue.impl.IndexingOperation;
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,9 +32,14 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import test_support.AsyncEnqueueingTestConfiguration;
 import test_support.TestCommonEntityWrapperManager;
 import test_support.TestIndexingQueueItemsTracker;
+import test_support.TestJpaIndexingQueueManager;
 import test_support.entity.TestRootEntity;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(
@@ -46,7 +50,7 @@ public class AsyncEnqueueingTest {
     @Autowired
     TestIndexingQueueItemsTracker indexingQueueItemsTracker;
     @Autowired
-    IndexingQueueManager indexingQueueManager;
+    TestJpaIndexingQueueManager indexingQueueManager;
     @Autowired
     TestCommonEntityWrapperManager ewm;
 
@@ -55,9 +59,12 @@ public class AsyncEnqueueingTest {
     @Autowired
     DataManager dataManager;
 
+    ExecutorService executorService = Executors.newSingleThreadExecutor();
+
     @BeforeEach
     public void setUp() {
         indexingQueueItemsTracker.clear();
+        indexingQueueManager.setIdsProcessingDelayMs(0);
 
         List<EnqueueingSession> sessions = dataManager.load(EnqueueingSession.class).all().list();
         sessions.forEach(session -> dataManager.remove(session));
@@ -78,20 +85,19 @@ public class AsyncEnqueueingTest {
         EnqueueingSession session = sessions.get(0);
         Assert.assertEquals(entityName, session.getEntityName());
         Assert.assertEquals("id", session.getOrderingProperty());
-        Assert.assertEquals(EnqueueingSessionAction.EXECUTE, session.getAction());
+        Assert.assertEquals(EnqueueingSessionStatus.ACTIVE, session.getStatus());
         Assert.assertNull(session.getLastProcessedValue());
     }
 
     @Test
-    @DisplayName("Stop enqueueing session for entity")
-    public void stopSession() {
+    @DisplayName("Terminate enqueueing session for entity")
+    public void terminateSession() {
         String entityName = metadata.getClass(TestRootEntity.class).getName();
         indexingQueueManager.initAsyncEnqueueIndexAll(entityName);
 
-        indexingQueueManager.stopAsyncEnqueueIndexAll(entityName);
-        EnqueueingSession session = dataManager.load(EnqueueingSession.class).all().one();
-        Assert.assertEquals(entityName, session.getEntityName());
-        Assert.assertEquals(EnqueueingSessionAction.STOP, session.getAction());
+        indexingQueueManager.terminateAsyncEnqueueIndexAll(entityName);
+        List<EnqueueingSession> sessions = dataManager.load(EnqueueingSession.class).all().list();
+        Assert.assertTrue(sessions.isEmpty());
     }
 
     @Test
@@ -103,7 +109,7 @@ public class AsyncEnqueueingTest {
         indexingQueueManager.suspendAsyncEnqueueIndexAll(entityName);
         EnqueueingSession session = dataManager.load(EnqueueingSession.class).all().one();
         Assert.assertEquals(entityName, session.getEntityName());
-        Assert.assertEquals(EnqueueingSessionAction.SKIP, session.getAction());
+        Assert.assertEquals(EnqueueingSessionStatus.SUSPENDED, session.getStatus());
     }
 
     @Test
@@ -115,12 +121,12 @@ public class AsyncEnqueueingTest {
         indexingQueueManager.suspendAsyncEnqueueIndexAll(entityName);
         EnqueueingSession session = dataManager.load(EnqueueingSession.class).all().one();
         Assert.assertEquals(entityName, session.getEntityName());
-        Assert.assertEquals(EnqueueingSessionAction.SKIP, session.getAction());
+        Assert.assertEquals(EnqueueingSessionStatus.SUSPENDED, session.getStatus());
 
-        indexingQueueManager.resumeAsyncEnqueueingIndexAll(entityName);
+        indexingQueueManager.resumeAsyncEnqueueIndexAll(entityName);
         session = dataManager.load(EnqueueingSession.class).all().one();
         Assert.assertEquals(entityName, session.getEntityName());
-        Assert.assertEquals(EnqueueingSessionAction.EXECUTE, session.getAction());
+        Assert.assertEquals(EnqueueingSessionStatus.ACTIVE, session.getStatus());
     }
 
     @Test
@@ -140,7 +146,7 @@ public class AsyncEnqueueingTest {
 
         EnqueueingSession session = dataManager.load(EnqueueingSession.class).all().one();
         Assert.assertEquals(entityName, session.getEntityName());
-        Assert.assertEquals(EnqueueingSessionAction.EXECUTE, session.getAction());
+        Assert.assertEquals(EnqueueingSessionStatus.ACTIVE, session.getStatus());
         Assert.assertNotNull(session.getLastProcessedValue());
 
         processed = indexingQueueManager.processNextEnqueueingSession(2);
@@ -168,7 +174,7 @@ public class AsyncEnqueueingTest {
 
         EnqueueingSession session = dataManager.load(EnqueueingSession.class).all().one();
         Assert.assertEquals(entityName, session.getEntityName());
-        Assert.assertEquals(EnqueueingSessionAction.EXECUTE, session.getAction());
+        Assert.assertEquals(EnqueueingSessionStatus.ACTIVE, session.getStatus());
         Assert.assertNotNull(session.getLastProcessedValue());
 
         processed = indexingQueueManager.processEnqueueingSession(entityName, 2);
@@ -196,7 +202,7 @@ public class AsyncEnqueueingTest {
         Assert.assertEquals(0, processed);
         Assert.assertEquals(0, itemsInQueue);
 
-        indexingQueueManager.resumeAsyncEnqueueingIndexAll(entityName);
+        indexingQueueManager.resumeAsyncEnqueueIndexAll(entityName);
 
         processed = indexingQueueManager.processEnqueueingSession(entityName, 2);
         itemsInQueue = indexingQueueItemsTracker.getAmountOfItemsForEntity(entityName, IndexingOperation.INDEX);
@@ -205,15 +211,12 @@ public class AsyncEnqueueingTest {
     }
 
     @Test
-    @DisplayName("Process stopped enqueueing session")
-    public void processStoppedSession() {
+    @DisplayName("Try to process absent enqueueing session")
+    public void processAbsentSession() {
         ewm.createTestRootEntity().save();
         ewm.createTestRootEntity().save();
         ewm.createTestRootEntity().save();
         String entityName = metadata.getClass(TestRootEntity.class).getName();
-        indexingQueueManager.initAsyncEnqueueIndexAll(entityName);
-
-        indexingQueueManager.stopAsyncEnqueueIndexAll(entityName);
 
         int processed = indexingQueueManager.processEnqueueingSession(entityName, 2);
         int itemsInQueue = indexingQueueItemsTracker.getAmountOfItemsForEntity(entityName, IndexingOperation.INDEX);
@@ -222,5 +225,99 @@ public class AsyncEnqueueingTest {
 
         List<EnqueueingSession> sessions = dataManager.load(EnqueueingSession.class).all().list();
         Assert.assertTrue(sessions.isEmpty());
+    }
+
+    @Test
+    @DisplayName("Init enqueueing session during processing of session for the same entity (not last page)")
+    public void initDuringProcessingNotLastPage() throws Exception {
+        ewm.createTestRootEntity().save();
+        ewm.createTestRootEntity().save();
+        ewm.createTestRootEntity().save();
+        initDuringProcessingInternal();
+    }
+
+    @Test
+    @DisplayName("Init enqueueing session during processing of session for the same entity (last page)")
+    public void initDuringProcessingLastPage() throws Exception {
+        ewm.createTestRootEntity().save();
+        ewm.createTestRootEntity().save();
+        initDuringProcessingInternal();
+    }
+
+    @Test
+    @DisplayName("Terminate enqueueing session during processing of this session")
+    public void terminateDuringProcessing() throws Exception {
+        ewm.createTestRootEntity().save();
+        ewm.createTestRootEntity().save();
+        ewm.createTestRootEntity().save();
+        String entityName = metadata.getClass(TestRootEntity.class).getName();
+        indexingQueueManager.initAsyncEnqueueIndexAll(entityName);
+
+        indexingQueueManager.setIdsProcessingDelayMs(3000);
+
+        Future<Integer> processing = executorService.submit(() -> indexingQueueManager.processEnqueueingSession(entityName, 2));
+        Thread.sleep(1000);
+
+        indexingQueueManager.terminateAsyncEnqueueIndexAll(entityName);
+
+        int processed = processing.get(3000, TimeUnit.MILLISECONDS);
+
+        int itemsInQueue = indexingQueueItemsTracker.getAmountOfItemsForEntity(entityName, IndexingOperation.INDEX);
+        Assert.assertEquals(2, processed);
+        Assert.assertEquals(2, itemsInQueue);
+
+        List<EnqueueingSession> sessions = dataManager.load(EnqueueingSession.class).all().list();
+        Assert.assertTrue(sessions.isEmpty());
+    }
+
+    @Test
+    @DisplayName("Suspend enqueueing session during processing of this session")
+    public void suspendDuringProcessing() throws Exception {
+        ewm.createTestRootEntity().save();
+        ewm.createTestRootEntity().save();
+        ewm.createTestRootEntity().save();
+        String entityName = metadata.getClass(TestRootEntity.class).getName();
+        indexingQueueManager.initAsyncEnqueueIndexAll(entityName);
+
+        indexingQueueManager.setIdsProcessingDelayMs(3000);
+
+        Future<Integer> processing = executorService.submit(() -> indexingQueueManager.processEnqueueingSession(entityName, 2));
+        Thread.sleep(1000);
+
+        indexingQueueManager.suspendAsyncEnqueueIndexAll(entityName);
+
+        int processed = processing.get(3000, TimeUnit.MILLISECONDS);
+
+        int itemsInQueue = indexingQueueItemsTracker.getAmountOfItemsForEntity(entityName, IndexingOperation.INDEX);
+        Assert.assertEquals(2, processed);
+        Assert.assertEquals(2, itemsInQueue);
+
+        EnqueueingSession session = dataManager.load(EnqueueingSession.class).all().one();
+        Assert.assertEquals(entityName, session.getEntityName());
+        Assert.assertEquals(EnqueueingSessionStatus.SUSPENDED, session.getStatus());
+        Assert.assertNotNull(session.getLastProcessedValue());
+    }
+
+    protected void initDuringProcessingInternal() throws Exception {
+        String entityName = metadata.getClass(TestRootEntity.class).getName();
+        indexingQueueManager.initAsyncEnqueueIndexAll(entityName);
+
+        indexingQueueManager.setIdsProcessingDelayMs(3000);
+
+        Future<Integer> processing = executorService.submit(() -> indexingQueueManager.processEnqueueingSession(entityName, 2));
+        Thread.sleep(1000);
+
+        indexingQueueManager.initAsyncEnqueueIndexAll(entityName);
+
+        int processed = processing.get(3000, TimeUnit.MILLISECONDS);
+
+        int itemsInQueue = indexingQueueItemsTracker.getAmountOfItemsForEntity(entityName, IndexingOperation.INDEX);
+        Assert.assertEquals(2, processed);
+        Assert.assertEquals(2, itemsInQueue);
+
+        EnqueueingSession session = dataManager.load(EnqueueingSession.class).all().one();
+        Assert.assertEquals(entityName, session.getEntityName());
+        Assert.assertEquals(EnqueueingSessionStatus.ACTIVE, session.getStatus());
+        Assert.assertNull(session.getLastProcessedValue());
     }
 }

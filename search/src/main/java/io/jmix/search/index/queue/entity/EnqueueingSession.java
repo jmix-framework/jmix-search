@@ -19,7 +19,7 @@ package io.jmix.search.index.queue.entity;
 import io.jmix.core.entity.annotation.JmixGeneratedValue;
 import io.jmix.core.metamodel.annotation.InstanceName;
 import io.jmix.core.metamodel.annotation.JmixEntity;
-import io.jmix.search.index.queue.impl.EnqueueingSessionAction;
+import io.jmix.search.index.queue.impl.EnqueueingSessionStatus;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 
@@ -40,8 +40,8 @@ public class EnqueueingSession {
     @Id
     private UUID id;
 
-    @Column(name = "ACTION", nullable = false)
-    private String action;
+    @Column(name = "STATUS", nullable = false)
+    private String status;
 
     @InstanceName
     @NotNull
@@ -64,12 +64,12 @@ public class EnqueueingSession {
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdDate;
 
-    public EnqueueingSessionAction getAction() {
-        return action == null ? null : EnqueueingSessionAction.fromId(action);
+    public EnqueueingSessionStatus getStatus() {
+        return status == null ? null : EnqueueingSessionStatus.fromId(status);
     }
 
-    public void setAction(EnqueueingSessionAction action) {
-        this.action = action == null ? null : action.getId();
+    public void setStatus(EnqueueingSessionStatus status) {
+        this.status = status == null ? null : status.getId();
     }
 
     public String getLastProcessedValue() {

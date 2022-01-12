@@ -21,26 +21,22 @@ import io.jmix.core.metamodel.datatype.impl.EnumClass;
 import javax.annotation.Nullable;
 
 /**
- * Action that should be performed during session processing.
+ * Status of session.
  */
-public enum EnqueueingSessionAction implements EnumClass<String> {
+public enum EnqueueingSessionStatus implements EnumClass<String> {
 
     /**
-     * SEssion should be processed normal way.
+     * Session should be processed normal way.
      */
-    EXECUTE("EXECUTE"),
+    ACTIVE("ACTIVE"),
     /**
-     * Session execution should be skipped.
+     * Session should be skipped.
      */
-    SKIP("SKIP"),
-    /**
-     * Session can be removed or restarted.
-     */
-    STOP("STOP");
+    SUSPENDED("SUSPENDED");
 
     private final String id;
 
-    EnqueueingSessionAction(String value) {
+    EnqueueingSessionStatus(String value) {
         this.id = value;
     }
 
@@ -49,8 +45,8 @@ public enum EnqueueingSessionAction implements EnumClass<String> {
     }
 
     @Nullable
-    public static EnqueueingSessionAction fromId(String id) {
-        for (EnqueueingSessionAction at : EnqueueingSessionAction.values()) {
+    public static EnqueueingSessionStatus fromId(String id) {
+        for (EnqueueingSessionStatus at : EnqueueingSessionStatus.values()) {
             if (at.getId().equals(id)) {
                 return at;
             }

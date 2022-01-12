@@ -19,6 +19,7 @@ package io.jmix.search.index.queue;
 import io.jmix.core.Id;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Provides functionality for enqueuing entity instances and processing queue.
@@ -93,11 +94,21 @@ public interface IndexingQueueManager {
      */
     int enqueueIndexAll(String entityName);
 
+    /**
+     * Gets entity names of all existing enqueueing sessions.
+     *
+     * @return list of entity names
+     */
+    List<String> getEntityNamesOfEnqueueingSessions();
+
+    /**
+     * Initializes async enqueueing session for all indexed entities.
+     */
     void initAsyncEnqueueIndexAll();
 
     /**
      * Initializes async enqueueing session for provided entity.
-     * Has no effect if active session for this entity already exists.
+     * Existing session will be removed and created again.
      *
      * @param entityName entity name
      * @return true if operation was successfully performed, false otherwise
@@ -105,19 +116,9 @@ public interface IndexingQueueManager {
     boolean initAsyncEnqueueIndexAll(String entityName);
 
     /**
-     * Initializes async enqueueing session for provided entity.
-     * If 'restart' flag is set to true existing session will be reset to initial state and be processed from the start.
-     *
-     * @param entityName entity name
-     * @param restart    whether or not existing session should be restarted
-     * @return true if operation was successfully performed, false otherwise
-     */
-    boolean initAsyncEnqueueIndexAll(String entityName, boolean restart);
-
-    /**
      * Suspends enqueueing session for provided entity.
      * Suspended sessions are ignored during session processing.
-     * Session can be resumed by {@link #resumeAsyncEnqueueingIndexAll}
+     * Session can be resumed by {@link #resumeAsyncEnqueueIndexAll}
      *
      * @param entityName entity name
      * @return true if operation was successfully performed, false otherwise
@@ -130,16 +131,15 @@ public interface IndexingQueueManager {
      * @param entityName entity name
      * @return true if operation was successfully performed, false otherwise
      */
-    boolean resumeAsyncEnqueueingIndexAll(String entityName);
+    boolean resumeAsyncEnqueueIndexAll(String entityName);
 
     /**
-     * Stops enqueueing session for provided entity.
-     * Stopped session will be removed during next processing.
+     * Terminate enqueueing session for provided entity.
      *
      * @param entityName entity name
      * @return true if operation was successfully performed, false otherwise
      */
-    boolean stopAsyncEnqueueIndexAll(String entityName);
+    boolean terminateAsyncEnqueueIndexAll(String entityName);
 
     /**
      * Processes next available enqueueing session - one batch (with default size) of entity instances

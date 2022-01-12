@@ -19,6 +19,7 @@ package io.jmix.search.index.queue.impl;
 import io.jmix.core.DataManager;
 import io.jmix.core.Metadata;
 import io.jmix.core.MetadataTools;
+import io.jmix.core.entity.KeyValueEntity;
 import io.jmix.core.metamodel.model.MetaClass;
 import io.jmix.core.metamodel.model.MetaProperty;
 import io.jmix.search.index.impl.IndexingLocker;
@@ -30,8 +31,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Component("search_EnqueueingSessionManager")
 public class EnqueueingSessionManager {
@@ -51,51 +54,42 @@ public class EnqueueingSessionManager {
 
     /**
      * Initializes session for provided entity.
-     * New session will be created if it doesn't exist.
-     * Existing session with {@link EnqueueingSessionAction#STOP} action will be reset to initial state.
+     * Existing session will be removed and created again.
      *
      * @param entityName entity name
      * @return true if operation was successfully performed, false otherwise
      */
     public boolean initSession(String entityName) {
-        return initSession(entityName, false);
-    }
-
-    /**
-     * Initializes session for provided entity.
-     * New session will be created if it doesn't exist.
-     * Existing session will be reset to initial state if it has {@link EnqueueingSessionAction#STOP} action
-     * or 'restart' flag is set to true.
-     *
-     * @param entityName entity name
-     * @param restart    restarts existing session if true - sets ordering value to null
-     * @return true if operation was successfully performed, false otherwise
-     */
-    public boolean initSession(String entityName, boolean restart) {
         return executeManagementAction(entityName, 10000, () -> {
             EnqueueingSession existingSession = getSession(entityName);
-            EnqueueingSession effectiveSession;
             if (existingSession != null) {
-                if (restart || EnqueueingSessionAction.STOP.equals(existingSession.getAction())) {
-                    effectiveSession = existingSession;
-                } else {
-                    return true;
-                }
-            } else {
-                effectiveSession = metadata.create(EnqueueingSession.class);
+                dataManager.remove(existingSession);
             }
+
+            EnqueueingSession effectiveSession = metadata.create(EnqueueingSession.class);
 
             MetaClass entityClass = metadata.getClass(entityName);
             MetaProperty orderingProperty = resolveOrderingProperty(entityClass);
 
             effectiveSession.setEntityName(entityName);
-            effectiveSession.setAction(EnqueueingSessionAction.EXECUTE);
+            effectiveSession.setStatus(EnqueueingSessionStatus.ACTIVE);
             effectiveSession.setOrderingProperty(orderingProperty.getName());
             effectiveSession.setLastProcessedValue(null);
 
             dataManager.save(effectiveSession);
             return true;
         });
+    }
+
+    /**
+     * Gets entity names of all existing enqueueing sessions.
+     *
+     * @return list of entity names
+     */
+    public List<String> loadEntityNamesOfSessions() {
+        String queryString = "select e.entityName from search_EnqueueingSession e";
+        List<KeyValueEntity> loadedValues = dataManager.loadValues(queryString).properties("entityName").list();
+        return loadedValues.stream().map(v -> (String) v.getValue("entityName")).collect(Collectors.toList());
     }
 
     /**
@@ -108,22 +102,18 @@ public class EnqueueingSessionManager {
         return executeManagementAction(entityName, 10000, () -> {
             EnqueueingSession session = getSession(entityName);
             if (session != null) {
-                if (EnqueueingSessionAction.SKIP.equals(session.getAction())) {
-                    return true;
-                } else if (EnqueueingSessionAction.EXECUTE.equals(session.getAction())) {
-                    session.setAction(EnqueueingSessionAction.SKIP);
+                if (EnqueueingSessionStatus.ACTIVE.equals(session.getStatus())) {
+                    session.setStatus(EnqueueingSessionStatus.SUSPENDED);
                     dataManager.save(session);
-                    return true;
-                } else {
-                    return false;
                 }
+                return true;
             }
             return false;
         });
     }
 
     /**
-     * Resumes previously suspended session
+     * Resumes previously suspended session.
      *
      * @param entityName entity name
      * @return true if operation was successfully performed, false otherwise
@@ -132,32 +122,8 @@ public class EnqueueingSessionManager {
         return executeManagementAction(entityName, 10000, () -> {
             EnqueueingSession session = getSession(entityName);
             if (session != null) {
-                if (EnqueueingSessionAction.EXECUTE.equals(session.getAction())) {
-                    return true;
-                } else if (EnqueueingSessionAction.SKIP.equals(session.getAction())) {
-                    session.setAction(EnqueueingSessionAction.EXECUTE);
-                    dataManager.save(session);
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-            return false;
-        });
-    }
-
-    /**
-     * Marks session as terminated. It can't be executed, suspended or resumed. It can only be restarted or removed.
-     *
-     * @param entityName entity name
-     * @return true if operation was successfully performed, false otherwise
-     */
-    public boolean stopSession(String entityName) {
-        return executeManagementAction(entityName, 10000, () -> {
-            EnqueueingSession session = getSession(entityName);
-            if (session != null) {
-                if (!EnqueueingSessionAction.STOP.equals(session.getAction())) {
-                    session.setAction(EnqueueingSessionAction.STOP);
+                if (EnqueueingSessionStatus.SUSPENDED.equals(session.getStatus())) {
+                    session.setStatus(EnqueueingSessionStatus.ACTIVE);
                     dataManager.save(session);
                 }
                 return true;
@@ -175,7 +141,24 @@ public class EnqueueingSessionManager {
     public boolean removeSession(EnqueueingSession session) {
         String entityName = session.getEntityName();
         return executeManagementAction(entityName, 10000, () -> {
-            dataManager.remove(session);
+            Optional<EnqueueingSession> currentSessionOpt = reloadSession(session);
+            currentSessionOpt.ifPresent(currentSession -> dataManager.remove(currentSession));
+            return true;
+        });
+    }
+
+    /**
+     * Removes session by provided entity name.
+     *
+     * @param entityName entity name
+     * @return true if operation was successfully performed, false otherwise
+     */
+    public boolean removeSession(String entityName) {
+        return executeManagementAction(entityName, 10000, () -> {
+            EnqueueingSession session = getSession(entityName);
+            if (session != null) {
+                dataManager.remove(session);
+            }
             return true;
         });
     }
@@ -199,15 +182,15 @@ public class EnqueueingSessionManager {
     }
 
     /**
-     * Gets next existing session. Ignores session with action {@link EnqueueingSessionAction#SKIP}
+     * Gets next active session.
      *
-     * @return some existing session or null if there are no sessions at all
+     * @return some active session or null if there are no sessions at all
      */
     @Nullable
-    public EnqueueingSession getNextSession() {
+    public EnqueueingSession getNextActiveSession() {
         Optional<EnqueueingSession> session = dataManager.load(EnqueueingSession.class)
-                .query("WHERE e.action <> :action ORDER BY e.createdDate ASC")
-                .parameter("action", EnqueueingSessionAction.SKIP)
+                .query("WHERE e.status = :status ORDER BY e.createdDate ASC")
+                .parameter("status", EnqueueingSessionStatus.ACTIVE)
                 .optional();
         return session.orElse(null);
     }
@@ -221,8 +204,8 @@ public class EnqueueingSessionManager {
     public void updateOrderingValue(EnqueueingSession session, @Nullable Object lastOrderingValue) {
         String entityName = session.getEntityName();
         executeManagementAction(entityName, 10000, () -> {
-            EnqueueingSession internalSession = getSession(entityName);
-            if (internalSession == null) {
+            EnqueueingSession currentSession = reloadSession(session).orElse(null);
+            if (currentSession == null) {
                 return false;
             }
 
@@ -233,10 +216,14 @@ public class EnqueueingSessionManager {
                 rawOrderingValue = convertOrderingValueToString(lastOrderingValue);
             }
 
-            internalSession.setLastProcessedValue(rawOrderingValue);
-            dataManager.save(internalSession);
+            currentSession.setLastProcessedValue(rawOrderingValue);
+            dataManager.save(currentSession);
             return true;
         });
+    }
+
+    protected Optional<EnqueueingSession> reloadSession(EnqueueingSession session) {
+        return dataManager.load(EnqueueingSession.class).id(session.getId()).optional();
     }
 
     protected Optional<EnqueueingSession> loadEnqueueingSessionEntityByEntityName(String entityName) {
