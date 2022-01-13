@@ -170,13 +170,34 @@ public class JpaIndexingQueueManager implements IndexingQueueManager {
     }
 
     @Override
+    public void suspendAsyncEnqueueIndexAll() {
+        indexConfigurationManager.getAllIndexConfigurations().stream()
+                .map(IndexConfiguration::getEntityName)
+                .forEach(this::suspendAsyncEnqueueIndexAll);
+    }
+
+    @Override
     public boolean suspendAsyncEnqueueIndexAll(String entityName) {
         return enqueueingSessionManager.suspendSession(entityName);
     }
 
     @Override
+    public void resumeAsyncEnqueueIndexAll() {
+        indexConfigurationManager.getAllIndexConfigurations().stream()
+                .map(IndexConfiguration::getEntityName)
+                .forEach(this::resumeAsyncEnqueueIndexAll);
+    }
+
+    @Override
     public boolean resumeAsyncEnqueueIndexAll(String entityName) {
         return enqueueingSessionManager.resumeSession(entityName);
+    }
+
+    @Override
+    public void terminateAsyncEnqueueIndexAll() {
+        indexConfigurationManager.getAllIndexConfigurations().stream()
+                .map(IndexConfiguration::getEntityName)
+                .forEach(this::terminateAsyncEnqueueIndexAll);
     }
 
     @Override

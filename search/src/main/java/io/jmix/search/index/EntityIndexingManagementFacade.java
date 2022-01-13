@@ -47,15 +47,14 @@ public class EntityIndexingManagementFacade {
     @Autowired
     protected SearchProperties searchProperties;
 
-    @ManagedAttribute(description = "Defines the way of index synchronization")
+    @ManagedAttribute(description = "Strategy of index synchronization")
     public String getIndexSchemaManagementStrategy() {
         return searchProperties.getIndexSchemaManagementStrategy().toString();
     }
 
-    @ManagedAttribute(description = "Displays entities with existing async enqueueing sessions")
-    public String getEntityNamesOfAsyncEnqueueingSessions() {
-        List<String> entityNames = indexingQueueManager.getEntityNamesOfEnqueueingSessions();
-        return String.join(System.lineSeparator(), entityNames);
+    @ManagedAttribute(description = "List of entities to be asynchronously enqueued")
+    public List<String> getEntityNamesOfAsyncEnqueueingSessions() {
+        return indexingQueueManager.getEntityNamesOfEnqueueingSessions();
     }
 
     @Authenticated
@@ -105,6 +104,13 @@ public class EntityIndexingManagementFacade {
 
     @Authenticated
     @ManagedOperation(description = "Suspend async enqueueing process")
+    public String suspendAsyncEnqueueing() {
+        indexingQueueManager.suspendAsyncEnqueueIndexAll();
+        return "All async enqueueing processed has been suspended";
+    }
+
+    @Authenticated
+    @ManagedOperation(description = "Suspend async enqueueing process for provided entity")
     @ManagedOperationParameters({
             @ManagedOperationParameter(name = "entityName", description = "Name of entity configured for indexing, e.g. demo_Order")
     })
@@ -119,7 +125,14 @@ public class EntityIndexingManagementFacade {
     }
 
     @Authenticated
-    @ManagedOperation(description = "Resume previously suspended async enqueueing process")
+    @ManagedOperation(description = "Resume all previously suspended async enqueueing processes")
+    public String resumeAsyncEnqueueing() {
+        indexingQueueManager.resumeAsyncEnqueueIndexAll();
+        return "All async enqueueing processed has been resumed";
+    }
+
+    @Authenticated
+    @ManagedOperation(description = "Resume previously suspended async enqueueing process for provided entity")
     @ManagedOperationParameters({
             @ManagedOperationParameter(name = "entityName", description = "Name of entity configured for indexing, e.g. demo_Order")
     })
@@ -135,6 +148,13 @@ public class EntityIndexingManagementFacade {
 
     @Authenticated
     @ManagedOperation(description = "Terminate async enqueueing process")
+    public String terminateAsyncEnqueueing() {
+        indexingQueueManager.terminateAsyncEnqueueIndexAll();
+        return "All async enqueueing processed has been terminated";
+    }
+
+    @Authenticated
+    @ManagedOperation(description = "Terminate async enqueueing process for provided entity")
     @ManagedOperationParameters({
             @ManagedOperationParameter(name = "entityName", description = "Name of entity configured for indexing, e.g. demo_Order")
     })

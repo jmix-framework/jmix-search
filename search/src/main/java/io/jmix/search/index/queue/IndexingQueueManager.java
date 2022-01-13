@@ -116,6 +116,13 @@ public interface IndexingQueueManager {
     boolean initAsyncEnqueueIndexAll(String entityName);
 
     /**
+     * Suspends all enqueueing sessions.
+     * Suspended sessions are ignored during session processing.
+     * Session can be resumed by {@link #resumeAsyncEnqueueIndexAll}
+     */
+    void suspendAsyncEnqueueIndexAll();
+
+    /**
      * Suspends enqueueing session for provided entity.
      * Suspended sessions are ignored during session processing.
      * Session can be resumed by {@link #resumeAsyncEnqueueIndexAll}
@@ -126,7 +133,12 @@ public interface IndexingQueueManager {
     boolean suspendAsyncEnqueueIndexAll(String entityName);
 
     /**
-     * Resumes previously suspended enqueueing session.
+     * Resumes all previously suspended enqueueing sessions.
+     */
+    void resumeAsyncEnqueueIndexAll();
+
+    /**
+     * Resumes previously suspended enqueueing session for provided entity.
      *
      * @param entityName entity name
      * @return true if operation was successfully performed, false otherwise
@@ -134,7 +146,12 @@ public interface IndexingQueueManager {
     boolean resumeAsyncEnqueueIndexAll(String entityName);
 
     /**
-     * Terminate enqueueing session for provided entity.
+     * Terminates all enqueueing sessions.
+     */
+    void terminateAsyncEnqueueIndexAll();
+
+    /**
+     * Terminates enqueueing session for provided entity.
      *
      * @param entityName entity name
      * @return true if operation was successfully performed, false otherwise
