@@ -107,10 +107,10 @@ public abstract class OrderBasedEntityIdsLoader implements EntityIdsLoader {
         }
 
         List<String> conditions = new ArrayList<>(2);
-        if(!entityClass.getDescendants().isEmpty()) {
+        if (!entityClass.getDescendants().isEmpty()) {
             conditions.add("TYPE(e) = " + entityName);
         }
-        if(!initial) {
+        if (!initial) {
             conditions.add("e." + orderingProperty + " > :value");
         }
 
@@ -131,7 +131,7 @@ public abstract class OrderBasedEntityIdsLoader implements EntityIdsLoader {
 
     @Nullable
     protected Object resolveLastLoadedOrderingValue(List<KeyValueEntity> loadedValues, String primaryKeyProperty, String orderingProperty) {
-        if(loadedValues.isEmpty()) {
+        if (loadedValues.isEmpty()) {
             return null;
         }
         String effectiveProperty = primaryKeyProperty.equals(orderingProperty) ? "objectId" : "orderingValue";
