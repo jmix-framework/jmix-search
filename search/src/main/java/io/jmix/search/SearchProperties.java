@@ -342,7 +342,7 @@ public class SearchProperties {
         protected final SSL ssl;
 
         /**
-         * Refresh policy that should be used with bulk requests to Elasticsearch: NONE (default), WAIT_UNTIL, IMMEDIATE)
+         * Refresh policy that should be used with bulk requests to Elasticsearch: NONE (default), WAIT_UNTIL, IMMEDIATE
          */
         protected final RefreshPolicy bulkRequestRefreshPolicy;
 
