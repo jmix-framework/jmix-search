@@ -298,6 +298,9 @@ public class SearchProperties {
         return elasticsearch.ssl.keyStoreType;
     }
 
+    /**
+     * @see Elasticsearch#bulkRequestRefreshPolicy
+     */
     public RefreshPolicy getElasticsearchBulkRequestRefreshPolicy() {
         return elasticsearch.bulkRequestRefreshPolicy;
     }
@@ -338,6 +341,9 @@ public class SearchProperties {
 
         protected final SSL ssl;
 
+        /**
+         * Refresh policy that should be used with bulk requests to Elasticsearch: NONE (default), WAIT_UNTIL, IMMEDIATE)
+         */
         protected final RefreshPolicy bulkRequestRefreshPolicy;
 
         public Elasticsearch(
